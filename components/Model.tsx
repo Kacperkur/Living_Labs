@@ -2,10 +2,16 @@
 
 import React, { useEffect, useRef } from 'react';
 import { useAnimations, useGLTF } from '@react-three/drei';
-import { Group, Box3, Vector3, Mesh } from 'three';
+import { Group, Box3, Vector3, Mesh, Object3D, AnimationClip, KeyframeTrack } from 'three';
+
+// Minimal local GLTF-like type to avoid depending on three's example typings in this project.
+type MinimalGLTF = {
+    scene: Object3D;
+    animations?: AnimationClip[];
+};
 
 // preload the model from the public root (Next.js serves files in /public at the site root)
-useGLTF.preload('/Test.glb');
+useGLTF.preload('/URI_Iter4.glb');
 
 type ModelProps = {
     scale?: number;
@@ -16,14 +22,15 @@ export default function Model({ scale = 1 }: ModelProps) {
 
     
     // do not include '/public' in the URL — Next serves public files at '/<filename>'
-    const gltf = useGLTF('/Test.glb') as any;
+    const gltf = useGLTF('/URI_Iter4.glb') as unknown as MinimalGLTF;
     const { scene: pcObject, animations } = gltf;
 
         // hook that maps animations to three.js AnimationActions bound to the `group`
-        const { actions, names } = useAnimations(animations, group);
+    const { actions, names } = useAnimations(animations as AnimationClip[], group);
 
         // Log animations and actions so you can inspect them in the browser console.
         useEffect(() => {
+            if (!pcObject) return;
             console.log('GLTF animations:', animations);
             console.log('Animation names:', names);
             console.log('Actions object:', actions);
@@ -41,7 +48,7 @@ export default function Model({ scale = 1 }: ModelProps) {
 
             // Traverse and disable frustum culling on meshes (debug only)
             try {
-                pcObject.traverse((child: any) => {
+                pcObject.traverse((child: Object3D) => {
                     if ((child as Mesh).isMesh) {
                         (child as Mesh).frustumCulled = false;
                         // log a little info about the mesh
@@ -58,18 +65,18 @@ export default function Model({ scale = 1 }: ModelProps) {
                 actions[first]?.play();
                 console.info(`Playing animation: ${first}`);
             }
-        }, [animations, actions, names]);
+    }, [animations, actions, names, pcObject]);
 
         // Log detailed clip info
         useEffect(() => {
             if (animations && animations.length) {
-                animations.forEach((clip: any, idx: number) => {
-                    console.log(`Clip[${idx}]: name=${clip.name}, duration=${clip.duration}, tracks=${clip.tracks?.length}`);
-                    if (clip.tracks && clip.tracks.length) {
-                        clip.tracks.forEach((t: any) => console.log('  track:', t.name, 'times length:', t.times?.length));
-                    }
-                });
-            }
+                    animations.forEach((clip: AnimationClip, idx: number) => {
+                        console.log(`Clip[${idx}]: name=${clip.name}, duration=${clip.duration}, tracks=${clip.tracks?.length}`);
+                        if (clip.tracks && clip.tracks.length) {
+                            clip.tracks.forEach((t: KeyframeTrack) => console.log('  track:', t.name, 'times length:', t.times?.length));
+                        }
+                    });
+                }
         }, [animations]);
 
     // actions are already created and logged above via useAnimations(animations, group)

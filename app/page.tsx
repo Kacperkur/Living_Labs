@@ -1,4 +1,3 @@
-import { Scene } from "@/components/Scene";
 import dynamic from 'next/dynamic';
 
 const DynamicScene = dynamic(() => import('@/components/Scene').then(mod => mod.Scene),);

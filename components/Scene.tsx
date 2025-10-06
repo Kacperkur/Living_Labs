@@ -6,7 +6,7 @@ import React, { Suspense } from 'react'; //allows us to suspend until
 import { Bounds, Center, Html, useProgress, OrbitControls } from '@react-three/drei';
 
 function Loader() {
-    const { progress, active } = useProgress();
+    const { progress } = useProgress();
 
     return <Html center>{progress.toFixed(1)}%</Html>;
 }
