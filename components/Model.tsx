@@ -5,7 +5,7 @@ import { useAnimations, useGLTF } from '@react-three/drei';
 import { Group, Box3, Vector3, Mesh } from 'three';
 
 // preload the model from the public root (Next.js serves files in /public at the site root)
-useGLTF.preload('/Test.glb');
+useGLTF.preload('/URI_Iter6-2.glb');
 
 type ModelProps = {
     scale?: number;
@@ -15,8 +15,8 @@ export default function Model({ scale = 1 }: ModelProps) {
     const group = useRef<Group>(null); // Inside the component, a useRef hook creates a reference to a Three.js Group object, which acts as a container for the 3D model and its animations.
 
     
-    // do not include '/public' in the URL — Next serves public files at '/<filename>'
-    const gltf = useGLTF('/Test.glb') as any;
+    // do not include '/public' in the URL  Next serves public files at '/<filename>'
+    const gltf = useGLTF('/URI_Iter6-2.glb') as any;
     const { scene: pcObject, animations } = gltf;
 
         // hook that maps animations to three.js AnimationActions bound to the `group`

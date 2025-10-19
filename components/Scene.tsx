@@ -1,42 +1,61 @@
-"use client"; //redner client side
+"use client";
 
-import {Canvas} from '@react-three/fiber';
-import Model from './Model'; //import this specific model from our models folder
-import React, { Suspense } from 'react'; //allows us to suspend until 
-import { Bounds, Center, Html, useProgress, OrbitControls } from '@react-three/drei';
+import { Canvas } from "@react-three/fiber";
+import Model from "./Model";
+import React, { Suspense } from "react";
+import {
+  Bounds,
+  Center,
+  OrthographicCamera,
+  OrbitControls,
+} from "@react-three/drei";
 
-function Loader() {
-    const { progress, active } = useProgress();
+export function Scene({
+  fullScreen = true,
+  showModel = true,
+}: {
+  fullScreen?: boolean;
+  showModel?: boolean;
+}) {
+  const containerStyle: React.CSSProperties = fullScreen
+    ? { width: "100vw", height: "100vh", position: "relative" }
+    : { width: "100%", height: "60vh", position: "relative" };
 
-    return <Html center>{progress.toFixed(1)}%</Html>;
+  return (
+    <div style={containerStyle}>
+      <Canvas style={{ width: "100%", height: "100%" }}>
+        <directionalLight position={[10, 20, 10]} intensity={2} />
+        <ambientLight intensity={10} />
+
+        {/* Fixed angled orthographic camera - moved further back */}
+        <OrthographicCamera
+          makeDefault
+          position={[1000, 100, 80]} // increased distance, same angled/top-down orientation
+          rotation={[-Math.PI / 4, Math.PI / 4, 0]} // tilt downward
+          zoom={3} // lower zoom to make the model appear smaller / further away
+          near={0.1}
+          far={10000}
+        />
+
+        {/* Pan + zoom only controls */}
+        <OrbitControls
+          makeDefault
+          enableRotate={false}
+          enablePan={true}
+          enableZoom={true}
+          screenSpacePanning={false} // keeps pan flat
+        />
+
+        <Suspense fallback={null}>
+          {showModel && (
+        <Bounds fit={false}>
+          <Center>
+            <Model />
+          </Center>
+        </Bounds>
+          )}
+        </Suspense>
+      </Canvas>
+    </div>
+  );
 }
-
-export function Scene(){
-    return (
-        <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-            <Canvas
-                className="w-screen h-screen"
-                style={{ width: '100%', height: '100%' }}
-                camera={{ position: [100, 100, 100], near: 0.1, far: 10000 }}
-            >
-                <directionalLight position={[10, 10, 10]} intensity={4} />
-                <ambientLight intensity={0.5} />
-                
-                <Suspense fallback={<Loader />}>
-    
-                    <Bounds fit margin={2}>
-                        <Center>
-                            <Model />
-                        </Center>
-                    </Bounds>
-                    
-                </Suspense>
-
-                <OrbitControls enablePan={false} maxPolarAngle={Math.PI / 2} />
-            </Canvas>
-        </div>
-    );
-}
-
-
-    
