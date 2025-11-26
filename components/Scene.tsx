@@ -10,7 +10,7 @@ import { Bounds, Center, Html, useProgress, OrbitControls, OrthographicCamera } 
 
 
 function Loader() {
-    const { progress, active } = useProgress();
+    const { progress } = useProgress();
 
     return <Html center>{progress.toFixed(1)}%</Html>;
 }
