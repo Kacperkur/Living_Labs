@@ -4,19 +4,19 @@ import React, { useEffect, useRef } from 'react';
 import { useAnimations, useGLTF } from '@react-three/drei';
 import { Group, Box3, Vector3, Mesh } from 'three';
 
-// preload the model from the public root (Next.js serves files in /public at the site root)
-useGLTF.preload('/URI_Iter6-2.glb');
+// preload the model from the public root /public 
+useGLTF.preload('myURImodel2.glb');
 
 type ModelProps = {
     scale?: number;
 };
 
 export default function Model({ scale = 1 }: ModelProps) {
-    const group = useRef<Group>(null); // Inside the component, a useRef hook creates a reference to a Three.js Group object, which acts as a container for the 3D model and its animations.
+    const group = useRef<Group>(null); // Inside the component, I use a useRef hook which creates a reference to a Three.js Group object, which acts as a container for the 3D model and its animations.
 
     
     // do not include '/public' in the URL  Next serves public files at '/<filename>'
-    const gltf = useGLTF('/URI_Iter6-2.glb') as any;
+    const gltf = useGLTF('/myURImodel2.glb') as any;
     const { scene: pcObject, animations } = gltf;
 
         // hook that maps animations to three.js AnimationActions bound to the `group`
@@ -43,9 +43,20 @@ export default function Model({ scale = 1 }: ModelProps) {
             try {
                 pcObject.traverse((child: any) => {
                     if ((child as Mesh).isMesh) {
-                        (child as Mesh).frustumCulled = false;
+                        const m = child as Mesh;
+                        m.frustumCulled = false;
+                        // enable shadows: cast and receive
+                        try {
+                            m.castShadow = true;
+                            m.receiveShadow = true;
+                        } catch (e) {
+                            console.warn('Failed to set shadows on mesh', m.name, e);
+                        }
+                        // mark this mesh selectable for hover interactions
+                        if (!m.userData) m.userData = {};
+                        m.userData.selectable = true;
                         // log a little info about the mesh
-                        console.log('Mesh:', child.name, 'visible:', child.visible, 'frustumCulled set to false');
+                        console.log('Mesh:', m.name, 'visible:', m.visible, 'frustumCulled set to false');
                     }
                 });
             } catch (e) {
@@ -74,7 +85,8 @@ export default function Model({ scale = 1 }: ModelProps) {
 
     // actions are already created and logged above via useAnimations(animations, group)
     return (
-        <group ref={group}>
+        // rotate the entire model +90 degrees around Y (Math.PI/2)
+        <group ref={group} rotation={[0, Math.PI / 2, 0]}>
             <primitive object={pcObject} dispose={null} scale={scale} />
         </group>
     );

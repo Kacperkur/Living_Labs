@@ -24,7 +24,12 @@ export default function RootLayout({
 }>) {
     return (
     <html lang="en">
+      {/* suppressHydrationWarning prevents noisy dev-time hydration warnings caused
+          by browser extensions or other client-only attribute changes (e.g. Grammarly)
+          that mutate the DOM before React hydrates. Apply to a smaller element if you
+          need more granular control. */}
       <body
+        suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#5d99bd] text-[#215369] dark:bg-[#0a0a0a] dark:text-[#ededed] min-h-screen`}
       >
         {children}

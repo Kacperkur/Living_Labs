@@ -1,6 +1,11 @@
+"use client";
+
 import Preload from '@/components/Preload';
 import Head from 'next/head';
-import { Scene } from '@/components/Scene'; // ✅ now using Scene directly
+import { Scene } from '@/components/Scene'; 
+import SearchBar from '@/components/SearchBar';
+import ResultPanel from '@/components/ResultPanel';
+import { useState } from 'react';
 
 import { Quantico } from 'next/font/google';
 import { Newsreader } from 'next/font/google';
@@ -15,16 +20,18 @@ const newsreader = Newsreader({
 });
 
 export default function Home() {
+  const [results, setResults] = useState<any[] | null>(null);
+
   return (
     <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Preload model in background */}
       <Preload />
 
-      {/* Header - top 20% */}
+      {/* Header - top area (fixed viewport percentage) */}
       <header
         style={{
           backgroundColor: '#FFFFFF',
-          height: '20vh',
+          height: '12vh',
           minHeight: 50,
           maxHeight: 75,
           display: 'flex',
@@ -55,10 +62,10 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Search bar - same height as navigation bar */}
+      {/* Search bar - small fixed area */}
       <div
         style={{
-          height: '20vh',
+          height: '8vh',
           minHeight: 50,
           maxHeight: 75,
           display: 'flex',
@@ -69,26 +76,28 @@ export default function Home() {
           backgroundColor: '#FFFFFF',
         }}
       >
-        <input
-          type="text"
-          placeholder="Search..."
-          style={{
-            width: '100%',
-            height: '60%',
-            fontFamily: 'Newsreader, serif',
-            fontSize: 20,
-            padding: '0 16px',
-            borderRadius: 8,
-            border: '1px solid #ccc',
-            outline: 'none',
-          }}
-        />
+        <SearchBar onResults={(matches) => setResults(matches)} />
       </div>
 
-      {/* Scene viewer - bottom 80% */}
-      <section style={{ height: '80vh', flex: '1 1 auto' }}>
+      {/* Scene viewer - fills remaining viewport space */}
+      <section style={{ flex: '0 0 auto', height: '60vh', minHeight: 240 }}>
         <Scene /> {/* ✅ replaces EmbeddedViewer */}
       </section>
+
+      {/* Results appear below the scene */}
+      <div style={{ width: '100%', boxSizing: 'border-box' }}>
+        {results && results.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {results
+              .filter((r) => r && typeof r === 'object') // Filter out invalid results
+              .map((r, i) => {
+                // Ensure we have a valid key for React
+                const key = r.id || r._id || `result-${i}`;
+                return <ResultPanel key={key} result={r} />;
+              })}
+          </div>
+        )}
+      </div>
     </main>
   );
 }
