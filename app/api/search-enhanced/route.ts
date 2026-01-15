@@ -1,13 +1,14 @@
 import { Pinecone } from '@pinecone-database/pinecone';
-import admin from '../../../firebase-config';
+import { getAdmin } from '../../../firebase-config';
 import { NextResponse } from 'next/server';
+import { Timestamp } from 'firebase-admin/firestore';
 
 const apiKey = process.env.PINECONE_API_KEY;
 if (!apiKey) console.warn("⚠️ Missing PINECONE_API_KEY environment variable");
 
 const pc = new Pinecone({ apiKey: apiKey as string });
 const index = pc.index("livinglabsdemo").namespace("media");
-const db = admin.firestore();
+let db: any = null;
 
 /**
  * Enhanced search route that combines Pinecone semantic search with Firebase enrichment.
@@ -51,6 +52,8 @@ async function enrichWithFirestore(mediaIds: string[]) {
       author: string | null;
       content_url: string | null;
       lab_id: string | null;
+      lab_name: string | null;
+      published: Timestamp | null;
     }> = [];
     
     // Only search the 'media' collection
@@ -82,7 +85,9 @@ async function enrichWithFirestore(mediaIds: string[]) {
               title: extractTitle(data),
               author: extractAuthor(data),
               content_url: extractContentUrl(data),
-              lab_id: extractLabId(data)
+              lab_id: extractLabId(data),
+              lab_name: extractLabName(data),
+              published: data.published || null
             });
           }
         });
@@ -194,6 +199,29 @@ function extractLabId(data: any): string | null {
   return typeof labRef === 'string' ? labRef : null;
 }
 
+// Helper: extract lab_name directly from document data
+function extractLabName(data: any): string | null {
+  if (!data) return null;
+  
+  return (
+    data.lab_name ||
+    data.labName ||
+    data.name ||
+    data.title ||
+    data.displayName ||
+    data.Name ||
+    data.metadata?.lab_name ||
+    data.metadata?.labName ||
+    data.metadata?.name ||
+    data.metadata?.title ||
+    data.fields?.lab_name ||
+    data.fields?.labName ||
+    data.fields?.name ||
+    data.fields?.title ||
+    null
+  );
+}
+
 export async function POST(req: Request) {
   try {
     const { query: queryText, topK = 5 } = await req.json();
@@ -224,13 +252,32 @@ export async function POST(req: Request) {
     });
 
     const hits = pineconeRes?.result?.hits ?? [];
-    const mediaIds = hits
-      .map((hit: any) => hit._id)
-      .filter((id: any): id is string => typeof id === "string");
 
-    console.log(`📍 Pinecone found ${hits.length} hits with IDs:`, mediaIds);
+    function extractRecordIdFromHit(h: any): string | null {
+      if (!h) return null;
+      if (h.record && typeof h.record.id === 'string' && h.record.id) return h.record.id;
+      if (typeof h.id === 'string' && h.id) return h.id;
+      if (typeof h._id === 'string' && h._id) return h._id;
+      if (h.metadata && (h.metadata.id || h.metadata.media_id || h.metadata.documentId)) return (h.metadata.id || h.metadata.media_id || h.metadata.documentId);
+      if (h.record && h.record.metadata && (h.record.metadata.id || h.record.metadata.media_id)) return (h.record.metadata.id || h.record.metadata.media_id);
+      return null;
+    }
+
+    const mediaIds = Array.from(new Set(hits.map(extractRecordIdFromHit).filter(Boolean))) as string[];
+
+    console.log(`📍 Pinecone found ${hits.length} hits`);
+    console.log('📍 Extracted mediaIds:', mediaIds);
+
+    const hitsMissingId = hits.filter((h: any) => !extractRecordIdFromHit(h));
+    if (hitsMissingId.length > 0) {
+      console.warn('Some Pinecone hits are missing an extractable record ID:', hitsMissingId.slice(0,5));
+    }
 
     // 2. Enrich with Firestore data from media collection only
+    if (!db) {
+      const admin = await getAdmin();
+      db = admin.firestore();
+    }
     const { enriched, notFound } = await enrichWithFirestore(mediaIds);
 
     console.log(`🔥 Firebase enriched ${enriched.length} documents, ${notFound.length} not found`);
@@ -248,6 +295,8 @@ export async function POST(req: Request) {
           author: firestoreData.author,
           content_url: firestoreData.content_url,
           lab_id: firestoreData.lab_id,
+          lab_name: firestoreData.lab_name,
+          published: firestoreData.published ? firestoreData.published.toDate().toISOString() : null,
           collection: 'media', // Always media collection
           pineconeMetadata: hit.metadata || hit.record?.metadata || null
         };
@@ -260,6 +309,8 @@ export async function POST(req: Request) {
           author: hit.metadata?.author || hit.record?.metadata?.author || null,
           content_url: hit.metadata?.content_url || hit.record?.metadata?.content_url || null,
           lab_id: hit.metadata?.lab_id || hit.record?.metadata?.lab_id || null,
+          lab_name: hit.metadata?.lab_name || hit.record?.metadata?.lab_name || null,
+          published: hit.metadata?.published || hit.record?.metadata?.published || null,
           collection: 'media',
           pineconeMetadata: hit.metadata || hit.record?.metadata || null
         };

@@ -5,99 +5,190 @@ import Head from 'next/head';
 import { Scene } from '@/components/Scene'; 
 import SearchBar from '@/components/SearchBar';
 import ResultPanel from '@/components/ResultPanel';
+import MediaDetailPanel from '@/components/MediaDetailPanel';
 import { useState } from 'react';
-
-import { Quantico } from 'next/font/google';
-import { Newsreader } from 'next/font/google';
-
-const quantico = Quantico({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-});
-const newsreader = Newsreader({
-  subsets: ['latin'],
-  weight: ['400', '700'],
-});
 
 export default function Home() {
   const [results, setResults] = useState<any[] | null>(null);
+  const [selectedLabId, setSelectedLabId] = useState<string | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
+
+  // Handle media selection
+  const handleMediaSelect = (id: string | null) => {
+    setSelectedLabId(id);
+    if (id && results) {
+      const media = results.find(r => (r.id || r._id) === id);
+      setSelectedMedia(media);
+    } else {
+      setSelectedMedia(null);
+    }
+  };
 
   return (
-    <main style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
       {/* Preload model in background */}
       <Preload />
 
-      {/* Header - top area (fixed viewport percentage) */}
+      {/* Header - responsive layout with search bar */}
       <header
         style={{
           backgroundColor: '#FFFFFF',
-          height: '12vh',
-          minHeight: 50,
-          maxHeight: 75,
+          minHeight: 60,
           display: 'flex',
+          flexWrap: 'wrap',
           alignItems: 'center',
-          padding: '0 24px',
+          padding: '8px 40px 8px 16px',
           boxSizing: 'border-box',
-          gap: 24,
-          justifyContent: 'space-between',
+          gap: 16,
+          flexShrink: 0,
         }}
       >
-        {/* Left side: logo and H1 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-          <img src="/logo.jpg" alt="Logo" style={{ height: 60, marginLeft: 24 }} />
-          <h1 style={{ margin: 0, fontFamily: 'Quantico, sans-serif' }}>Living Labs</h1>
-        </div>
+        <style dangerouslySetInnerHTML={{__html: `
+          @media (max-width: 1200px) {
+            .search-bar-wrapper {
+              order: 3 !important;
+              flex-basis: 100% !important;
+              max-width: 100% !important;
+              padding: 8px 24px !important;
+            }
+          }
+          
+          @media (max-width: 768px) {
+            .header-container {
+              padding: 8px 16px 8px 8px !important;
+              gap: 8px !important;
+            }
+            .logo-section {
+              gap: 12px !important;
+            }
+            .header-logo {
+              height: 40px !important;
+              margin-left: 8px !important;
+            }
+            .header-title {
+              font-size: 20px !important;
+            }
+            .nav-links {
+              gap: 16px !important;
+            }
+            .nav-links h2 {
+              font-size: 18px !important;
+            }
+          }
+          
+          @media (max-width: 480px) {
+            .logo-section {
+              gap: 8px !important;
+            }
+            .header-logo {
+              height: 36px !important;
+              margin-left: 4px !important;
+            }
+            .header-title {
+              font-size: 16px !important;
+            }
+            .nav-links {
+              gap: 12px !important;
+            }
+            .nav-links h2 {
+              font-size: 16px !important;
+            }
+          }
+        `}} />
+        {/* Top row container */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          width: '100%',
+          minHeight: 60,
+          flexWrap: 'wrap',
+          gap: 16
+        }}>
+          {/* Left side: logo and H1 */}
+          <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: 24, flexShrink: 0 }}>
+            <img className="header-logo" src="/logo.jpg" alt="Logo" style={{ height: 60, marginLeft: 24 }} />
+            <h1 className="header-title" style={{ margin: 0, fontFamily: 'Quantico, sans-serif', color: 'var(--tertiary-clr-100)', whiteSpace: 'nowrap' }}>Living Labs</h1>
+          </div>
 
-        {/* Right side: two H2s */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 24,
-            fontFamily: 'Quantico, sans-serif',
-          }}
-        >
-          <h2 style={{ margin: 0 }}>Our Labs</h2>
-          <h2 style={{ margin: 0 }}>Join</h2>
+          {/* Center: Search bar - wraps to next line on smaller screens */}
+          <div className="search-bar-wrapper" style={{ flex: '1 1 300px', maxWidth: '600px', minWidth: '300px', padding: '0 24px' }}>
+            <SearchBar onResults={(matches) => setResults(matches)} />
+          </div>
+
+          {/* Right side: two H2s */}
+          <div
+            className="nav-links"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 24,
+              fontFamily: 'Quantico, sans-serif',
+              color: 'var(--tertiary-clr-100)',
+              flexShrink: 0,
+            }}
+          >
+            <h2 style={{ margin: 0, whiteSpace: 'nowrap' }}>Our Labs</h2>
+            <h2 style={{ margin: 0, whiteSpace: 'nowrap' }}>Join</h2>
+          </div>
         </div>
       </header>
 
-      {/* Search bar - small fixed area */}
-      <div
-        style={{
-          height: '8vh',
-          minHeight: 50,
-          maxHeight: 75,
+      {/* Content area - vertical layout with sticky map */}
+      <div style={{ 
+        flex: 1, 
+        display: 'flex',
+        overflow: 'hidden'
+      }}>
+        {/* Left side: Map and Results */}
+        <div style={{
+          flex: selectedMedia ? '0 0 66.67%' : '1',
           display: 'flex',
-          alignItems: 'center',
-          padding: '0 24px',
-          boxSizing: 'border-box',
-          width: '100%',
-          backgroundColor: '#FFFFFF',
-        }}
-      >
-        <SearchBar onResults={(matches) => setResults(matches)} />
-      </div>
-
-      {/* Scene viewer - fills remaining viewport space */}
-      <section style={{ flex: '0 0 auto', height: '60vh', minHeight: 240 }}>
-        <Scene /> {/* ✅ replaces EmbeddedViewer */}
-      </section>
-
-      {/* Results appear below the scene */}
-      <div style={{ width: '100%', boxSizing: 'border-box' }}>
-        {results && results.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {results
-              .filter((r) => r && typeof r === 'object') // Filter out invalid results
-              .map((r, i) => {
-                // Ensure we have a valid key for React
-                const key = r.id || r._id || `result-${i}`;
-                return <ResultPanel key={key} result={r} />;
-              })}
+          flexDirection: 'column',
+          overflowY: results && results.length > 0 ? 'auto' : 'hidden',
+          overflowX: 'hidden',
+          position: 'relative',
+          transition: 'flex 0.3s ease'
+        }}>
+          {/* Sticky Scene at top */}
+          <div style={{ 
+            position: 'sticky',
+            top: 0,
+            height: results && results.length > 0 ? '40vh' : '100%',
+            minHeight: results && results.length > 0 ? '40vh' : 'auto',
+            zIndex: 1,
+            backgroundColor: '#fff'
+          }}>
+            <Scene />
           </div>
-        )}
+
+          {/* Scrollable Results below */}
+          {results && results.length > 0 && (
+            <div style={{ 
+              width: '100%', 
+              boxSizing: 'border-box', 
+              padding: '24px',
+              backgroundColor: '#fff',
+              boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)'
+            }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {results
+                  .filter((r) => r && typeof r === 'object')
+                  .map((r, i) => {
+                    const key = r.id || r._id || `result-${i}`;
+                    return <ResultPanel key={key} result={r} selectedId={selectedLabId} onSelect={handleMediaSelect} />;
+                  })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right side: 2-Column Media Detail Panel */}
+        <MediaDetailPanel 
+          selectedMedia={selectedMedia}
+          onClose={() => handleMediaSelect(null)}
+        />
       </div>
-    </main>
+    </div>
   );
 }

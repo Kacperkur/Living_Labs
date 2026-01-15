@@ -10,7 +10,7 @@ import { Bounds, Center, Html, useProgress, OrbitControls, OrthographicCamera } 
 
 
 function Loader() {
-    const { progress } = useProgress();
+    const { progress, active } = useProgress();
 
     return <Html center>{progress.toFixed(1)}%</Html>;
 }
@@ -58,7 +58,7 @@ export function Scene(){
         const factor = 0.5 * (1 / zoom);
 
         const movement = new THREE.Vector3();
-        movement.addScaledVector(right, -dx * factor);
+        movement.addScaledVector(right, -dx * factor * 0.3); // Reduced horizontal panning by 70%
         movement.addScaledVector(forward, dy * factor);
 
         cam.position.add(movement);
@@ -88,7 +88,14 @@ export function Scene(){
 
     return (
     <div
-        style={{ width: '100%', height: '100%', position: 'relative' }}
+        style={{ 
+            width: '100%', 
+            height: '100%', 
+            position: 'relative',
+            border: '2px ridge rgba(0, 0, 0, 0.2)',
+            boxSizing: 'border-box',
+            boxShadow: 'inset 0 8px 12px -8px rgba(0, 0, 0, 0.3)'
+        }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -102,7 +109,7 @@ export function Scene(){
                 {}
                 <OrthographicCamera
                     makeDefault
-                    position={[0,800,800]}
+                    position={[10,300,-400]}
                     rotation={[-Math.PI / 6, Math.PI / 4, 0]}
                     zoom={1}
                     near={0.1}
@@ -142,6 +149,8 @@ export function Scene(){
                     enableRotate={false}
                     enablePan={false} // we intercept panning
                     enableZoom={true}
+                    minZoom={0.5}
+                    maxZoom={3}
                     screenSpacePanning={false}
                 />
             </Canvas>

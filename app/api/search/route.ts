@@ -1,5 +1,5 @@
 import { Pinecone } from '@pinecone-database/pinecone';
-import admin from '../../../firebase-config'; // Firestore Admin SDK
+import { getAdmin } from '../../../firebase-config'; // Firestore Admin SDK (lazy)
 import { NextResponse } from 'next/server';
 
 // Ensure key exists
@@ -8,7 +8,7 @@ if (!apiKey) console.warn("⚠️ Missing PINECONE_API_KEY environment variable"
 
 const pc = new Pinecone({ apiKey: apiKey as string });
 const index = pc.index("livinglabsdemo").namespace("media");
-const db = admin.firestore();
+let db: any = null;
 
 
 export async function POST(req: Request) {
@@ -29,6 +29,12 @@ export async function POST(req: Request) {
       );
     }
 
+    // Ensure Firebase admin is initialized before any Firestore ops (if used)
+    if (!db) {
+      const admin = await getAdmin();
+      db = admin.firestore();
+    }
+
     // ✅ Semantic Search using text (returns hits)
     const pineconeRes = await index.searchRecords({
       query: {
@@ -40,9 +46,25 @@ export async function POST(req: Request) {
 
     const hits = pineconeRes?.result?.hits ?? [];
 
-    const mediaIds = hits
-      .map((hit: any) => hit._id)
-      .filter((id: any): id is string => typeof id === "string");
+    // Robust extractor for Pinecone record IDs — different SDKs/versions put the id
+    // in different places (record.id, id, _id, or inside metadata). Prefer record.id.
+    function extractRecordIdFromHit(h: any): string | null {
+      if (!h) return null;
+      if (h.record && typeof h.record.id === 'string' && h.record.id) return h.record.id;
+      if (typeof h.id === 'string' && h.id) return h.id;
+      if (typeof h._id === 'string' && h._id) return h._id;
+      if (h.metadata && (h.metadata.id || h.metadata.media_id || h.metadata.documentId)) return (h.metadata.id || h.metadata.media_id || h.metadata.documentId);
+      if (h.record && h.record.metadata && (h.record.metadata.id || h.record.metadata.media_id)) return (h.record.metadata.id || h.record.metadata.media_id);
+      return null;
+    }
+
+    const mediaIds = Array.from(new Set(hits.map(extractRecordIdFromHit).filter(Boolean))) as string[];
+
+    // Log any hits we couldn't extract an ID from to aid debugging
+    const hitsMissingId = hits.filter((h: any) => !extractRecordIdFromHit(h));
+    if (hitsMissingId.length > 0) {
+      console.warn('Some Pinecone hits are missing an extractable record ID:', hitsMissingId.slice(0,5));
+    }
 
     console.log("🔎 Pinecone Search Output:", {
       queryText,

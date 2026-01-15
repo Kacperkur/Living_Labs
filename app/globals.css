@@ -1,6 +1,36 @@
 @import url('https://fonts.googleapis.com/css2?family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap');
 
 
+:root{
+
+--background-clr-400:#FFFFFF;
+--primary-clr-300:#75B2DD; /* used for buttons and highlights */
+--secondary-clr-200:#EFCB68; /* used for on hover or state change */
+--tertiary-clr-100:#002147; /*  used for fonts and headings */ 
+
+
+}
+
+
+@font-face {
+  font-family: "Quantico";
+  src: url('/fonts/Quantico-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+.quantico-bold {
+  font-family: "Quantico", sans-serif;
+  font-weight: 700;
+  font-style: bold;
+}
+
+
+
+
+
+
 /* Ensure full-height root for utility classes like h-screen */
 html, body, #__next {
   height: 100%;
@@ -9,24 +39,16 @@ html, body, #__next {
 /* Remove browser default body margin (user agent stylesheet sets body { margin: 8px }) */
 body {
   margin: 0;
-}
-@font-face {
-  font-family: "Quantico";
-  src: url('/fonts/Quantico-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-}
-.quantico-bold {
-  font-family: "Quantico", sans-serif;
-  font-weight: 700;
-  font-style: normal;
+  color: var(--tertiary-clr-100);
 }
 
+
 /* Apply Quantico Bold to H2 globally (you can scope this more narrowly if needed) */
-h2 {
+h1, h2 {
   font-family: "Quantico", sans-serif;
   font-weight: 700;
   margin: 0; /* keep headings flush unless otherwise specified */
+  color: var(--tertiary-clr-100);
 }
 
 /* Three-window styles (added by assistant) */
@@ -76,3 +98,30 @@ h2 {
 
 /* Optional: you can define custom utility classes or tailwind config instead of CSS variables here */
 
+/* Custom Scrollbar Styling */
+/* WebKit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+  border: 2px solid #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}

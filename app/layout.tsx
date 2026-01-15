@@ -1,6 +1,18 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Quantico } from 'next/font/google';
+import { Onest } from 'next/font/google';
+
+const quantico = Quantico({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+});
+const onest = Onest({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+});
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

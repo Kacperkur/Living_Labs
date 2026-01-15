@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 type Result = {
   id?: string;
@@ -10,9 +10,13 @@ type Result = {
   [k: string]: any;
 };
 
-export default function ResultPanel({ result }: { result: Result }) {
-  const [labName, setLabName] = useState<string | null>(null);
-  const [loadingLabName, setLoadingLabName] = useState(false);
+type ResultPanelProps = {
+  result: Result;
+  selectedId?: string | null;
+  onSelect?: (id: string | null) => void;
+};
+
+export default function ResultPanel({ result, selectedId, onSelect }: ResultPanelProps) {
 
   // Deep serialize to remove any Firestore references that might have slipped through
   const safeResult = React.useMemo(() => {
@@ -31,6 +35,7 @@ export default function ResultPanel({ result }: { result: Result }) {
   }, [result]);
 
   const recordId = safeResult?.id || safeResult?.record?.id || safeResult?.record?.metadata?.id || safeResult?.metadata?.id || null;
+  const isSelected = recordId === selectedId;
 
   /*
     Resolve title from a number of common shapes returned by Firestore / search
@@ -63,62 +68,69 @@ export default function ResultPanel({ result }: { result: Result }) {
   // Get content_url for media preview
   const contentUrl = safeResult?.content_url || safeResult?.previewUrl || safeResult?.metadata?.content_url || safeResult?.metadata?.previewUrl || null;
   
-  // Get lab_id
-  const labId = safeResult?.lab_id || safeResult?.metadata?.lab_id || safeResult?.fields?.lab_id || null;
-
-  // Fetch lab name when lab_id changes
-  useEffect(() => {
-    async function fetchLabName() {
-      if (!labId || typeof labId !== 'string') {
-        setLabName(null);
-        return;
-      }
-
-      setLoadingLabName(true);
-      try {
-        const response = await fetch('/api/get-lab-name', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ lab_id: labId })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setLabName(data.labName || null);
-        } else {
-          console.warn('Failed to fetch lab name:', response.status);
-          setLabName(null);
-        }
-      } catch (error) {
-        console.warn('Error fetching lab name:', error);
-        setLabName(null);
-      } finally {
-        setLoadingLabName(false);
-      }
+  // Get lab_id and lab_name (now included from firebase-enrich)
+  const labId = safeResult?.lab_id || safeResult?.labId || safeResult?.metadata?.lab_id || safeResult?.fields?.lab_id || null;
+  const labName = safeResult?.labName || safeResult?.lab_name || safeResult?.metadata?.labName || safeResult?.metadata?.lab_name || null;
+  
+  // Get published date
+  const publishedRaw = safeResult?.published || safeResult?.metadata?.published || safeResult?.fields?.published || null;
+  
+  // Format published date as "Month Name Day, Year"
+  const formatPublishedDate = (dateStr: string | null): string | null => {
+    if (!dateStr) return null;
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return null;
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                          'July', 'August', 'September', 'October', 'November', 'December'];
+      const month = monthNames[date.getMonth()];
+      const day = date.getDate();
+      const year = date.getFullYear();
+      return `${month} ${day}, ${year}`;
+    } catch {
+      return null;
     }
-
-    fetchLabName();
-  }, [labId]);
+  };
+  const published = formatPublishedDate(publishedRaw);
 
   const hasPreview = !!contentUrl;
 
   if (hasPreview) {
     return (
-      <div style={{ width: '100vw', boxSizing: 'border-box', padding: 16, background: '#f9fafb', borderBottom: '1px solid #eee' }}>
+      <div 
+        style={{ 
+          width: '100vw', 
+          boxSizing: 'border-box', 
+          padding: 16, 
+          background: isSelected ? 'rgba(117, 178, 221, 0.15)' : '#f9fafb', 
+          borderBottom: '1px solid #eee', 
+          cursor: 'pointer',
+          borderLeft: isSelected ? '4px solid var(--primary-clr-300)' : '4px solid transparent',
+          boxShadow: isSelected ? 'inset 0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
+          transition: 'all 0.2s ease'
+        }}
+        onClick={(e) => {
+          if (onSelect) {
+            onSelect(isSelected ? null : recordId);
+          }
+        }}
+      >
         <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-          <div style={{ 
-            width: 320, 
-            height: 200, 
-            background: '#fff', 
-            border: '1px solid #ddd', 
-            borderRadius: 6, 
-            overflow: 'hidden', 
-            flex: '0 0 320px',
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
+          <div 
+            style={{ 
+              width: 160, 
+              height: 100, 
+              background: '#fff', 
+              border: '1px solid #ddd', 
+              borderRadius: 6, 
+              overflow: 'hidden', 
+              flex: '0 0 160px',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
             {/* Enhanced media handling: images, videos with thumbnails, and other content */}
             {contentUrl && (contentUrl.includes('.jpg') || contentUrl.includes('.jpeg') || contentUrl.includes('.png') || contentUrl.includes('.gif') || contentUrl.includes('.webp')) ? (
               /* Image files */
@@ -191,6 +203,7 @@ export default function ResultPanel({ result }: { result: Result }) {
                   color: 'white',
                   padding: '2px 6px',
                   borderRadius: 4,
+                  fontFamily: 'Onest, sans-serif',
                   fontSize: 10,
                   fontWeight: 600,
                   pointerEvents: 'none'
@@ -214,33 +227,71 @@ export default function ResultPanel({ result }: { result: Result }) {
 
           <div style={{ flex: 1, textAlign: 'left' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              {/* Title in Onest, 24px */}
-              <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 24, fontWeight: 700, marginBottom: 6 }}>{title}</div>
+              {/* Title in Onest, 24px - links directly to content_url */}
+              {contentUrl ? (
+                <a 
+                  href={contentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ 
+                    fontFamily: 'Onest, sans-serif', 
+                    fontSize: 24, 
+                    fontWeight: 700, 
+                    marginBottom: 6, 
+                    color: 'var(--tertiary-clr-100)',
+                    cursor: 'pointer',
+                    textDecoration: 'none',
+                    transition: 'color 0.2s'
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#0066cc')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--tertiary-clr-100)')}
+                  onClick={(e) => e.stopPropagation()} // Prevent div click from triggering
+                >
+                  {title}
+                </a>
+              ) : (
+                <div 
+                  style={{ 
+                    fontFamily: 'Onest, sans-serif', 
+                    fontSize: 24, 
+                    fontWeight: 700, 
+                    marginBottom: 6, 
+                    color: 'var(--tertiary-clr-100)'
+                  }}
+                >
+                  {title}
+                </div>
+              )}
               {/* Path badge (removed collection display) */}
               <div style={{ textAlign: 'right' }}>
                 {safeResult?.path && typeof safeResult.path === 'string' && (
-                  <div style={{ fontSize: 11, color: '#666', maxWidth: 360, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{safeResult.path}</div>
+                  <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 11, color: 'var(--tertiary-clr-100)', maxWidth: 360, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{safeResult.path}</div>
                 )}
               </div>
             </div>
 
             {/* Authors in Onest, 8px */}
-            <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 12, color: '#333', marginBottom: 8 }}>{authors}</div>
+            <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 12, color: 'var(--tertiary-clr-100)', marginBottom: 8 }}>{authors}</div>
 
             {/* Lab Name */}
-            <div style={{ fontSize: 12, color: '#666', marginTop: 4 }}>
-              {loadingLabName ? (
-                <span>Loading lab...</span>
-              ) : labName ? (
+            <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 12, color: 'var(--tertiary-clr-100)', marginTop: 4 }}>
+              {labName ? (
                 <span>Lab: {labName}</span>
               ) : labId ? (
                 <span>Lab ID: {labId}</span>
               ) : null}
             </div>
 
+            {/* Published Date */}
+            {published && (
+              <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 12, color: 'var(--tertiary-clr-100)', marginTop: 2 }}>
+                Published: {published}
+              </div>
+            )}
+
             {/* Fallback snippet or metadata */}
             {(safeResult?.metadata?.snippet || safeResult?.record?.metadata?.snippet) && (
-              <div style={{ fontSize: 13, color: '#444' }}>
+              <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 13, color: 'var(--tertiary-clr-100)' }}>
                 {typeof safeResult?.metadata?.snippet === 'string' ? safeResult.metadata.snippet : 
                  typeof safeResult?.record?.metadata?.snippet === 'string' ? safeResult.record.metadata.snippet : ''}
               </div>
@@ -253,27 +304,48 @@ export default function ResultPanel({ result }: { result: Result }) {
 
   // No-preview variant: centered, narrower card with vertically centered title/authors
   return (
-    <div style={{ width: '100vw', boxSizing: 'border-box', padding: 16, background: '#f9fafb', borderBottom: '1px solid #eee' }}>
+    <div 
+      style={{ 
+        width: '100vw', 
+        boxSizing: 'border-box', 
+        padding: 16, 
+        background: isSelected ? 'rgba(117, 178, 221, 0.15)' : '#f9fafb', 
+        borderBottom: '1px solid #eee',
+        cursor: 'pointer',
+        borderLeft: isSelected ? '4px solid var(--primary-clr-300)' : '4px solid transparent',
+        boxShadow: isSelected ? 'inset 0 4px 6px rgba(0, 0, 0, 0.1)' : 'none',
+        transition: 'all 0.2s ease'
+      }}
+      onClick={() => {
+        if (onSelect) {
+          onSelect(isSelected ? null : recordId);
+        }
+      }}
+    >
       <div style={{ maxWidth: 780, margin: '0 auto', background: '#fff', border: '1px solid #e6e6e6', borderRadius: 8, padding: 20, display: 'flex', alignItems: 'center', minHeight: 120 }}>
         <div style={{ width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 24, fontWeight: 700, marginBottom: 8 }}>{title}</div>
+            <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 24, fontWeight: 700, marginBottom: 8, color: 'var(--tertiary-clr-100)' }}>{title}</div>
             <div style={{ textAlign: 'right' }}>
               {safeResult?.path && typeof safeResult.path === 'string' && (
-                <div style={{ fontSize: 11, color: '#666', maxWidth: 360, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{safeResult.path}</div>
+                <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 11, color: 'var(--tertiary-clr-100)', maxWidth: 360, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{safeResult.path}</div>
               )}
             </div>
           </div>
-          <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 8, color: '#333' }}>{authors}</div>
-          <div style={{ fontSize: 12, color: '#666', marginTop: 6 }}>
-            {loadingLabName ? (
-              <span>Loading lab...</span>
-            ) : labName ? (
+          <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 8, color: 'var(--tertiary-clr-100)' }}>{authors}</div>
+          <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 12, color: 'var(--tertiary-clr-100)', marginTop: 6 }}>
+            {labName ? (
               <span>Lab: {labName}</span>
             ) : labId ? (
               <span>Lab ID: {labId}</span>
             ) : null}
           </div>
+          {/* Published Date */}
+          {published && (
+            <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 12, color: 'var(--tertiary-clr-100)', marginTop: 2 }}>
+              Published: {published}
+            </div>
+          )}
         </div>
       </div>
     </div>
