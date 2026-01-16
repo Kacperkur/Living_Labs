@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 
 type MediaDetailPanelProps = {
   selectedMedia: any;
@@ -299,37 +300,35 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
             )}
 
             {/* Visit Lab Button */}
-            <button
-              style={{
-                display: 'inline-block',
-                marginTop: 16,
-                padding: '12px 32px',
-                backgroundColor: 'var(--primary-clr-300)',
-                color: '#fff',
-                fontFamily: 'Onest, sans-serif',
-                fontSize: 16,
-                fontWeight: 600,
-                border: 'none',
-                borderRadius: 24,
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#0066cc';
-                e.currentTarget.style.transform = 'scale(1.05)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--primary-clr-300)';
-                e.currentTarget.style.transform = 'scale(1)';
-              }}
-              onClick={() => {
-                // Add your visit lab functionality here
-                console.log('Visit Lab clicked for:', labInfo?.name);
-              }}
-            >
-              Visit Lab
-            </button>
+            <Link href="/living-lab" style={{ textDecoration: 'none' }}>
+              <button
+                style={{
+                  display: 'inline-block',
+                  marginTop: 16,
+                  padding: '12px 32px',
+                  backgroundColor: 'var(--primary-clr-300)',
+                  color: '#fff',
+                  fontFamily: 'Onest, sans-serif',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  border: 'none',
+                  borderRadius: 24,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#0066cc';
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--primary-clr-300)';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              >
+                Visit Lab
+              </button>
+            </Link>
           </>
         ) : (
           <div style={{
