@@ -6,12 +6,23 @@ import { Scene } from '@/components/Scene';
 import SearchBar from '@/components/SearchBar';
 import ResultPanel from '@/components/ResultPanel';
 import MediaDetailPanel from '@/components/MediaDetailPanel';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 export default function Home() {
+  const searchParams = useSearchParams();
+  const searchBarRef = useRef<any>(null);
   const [results, setResults] = useState<any[] | null>(null);
   const [selectedLabId, setSelectedLabId] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
+
+  // Handle search from URL query parameter
+  useEffect(() => {
+    const query = searchParams.get('q');
+    if (query && searchBarRef.current) {
+      searchBarRef.current.triggerSearch(query);
+    }
+  }, [searchParams]);
 
   // Handle media selection
   const handleMediaSelect = (id: string | null) => {
@@ -113,7 +124,7 @@ export default function Home() {
 
           {/* Center: Search bar - wraps to next line on smaller screens */}
           <div className="search-bar-wrapper" style={{ flex: '1 1 300px', maxWidth: '600px', minWidth: '300px', padding: '0 24px' }}>
-            <SearchBar onResults={(matches) => setResults(matches)} />
+            <SearchBar ref={searchBarRef} onResults={(matches, query) => setResults(matches)} />
           </div>
 
           {/* Right side: two H2s */}

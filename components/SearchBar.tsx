@@ -1,8 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 
-export default function SearchBar({ onResults }: { onResults?: (matches: any[]) => void }) {
+type SearchBarProps = {
+  onResults?: (matches: any[], query: string) => void;
+};
+
+const SearchBar = forwardRef<any, SearchBarProps>(({ onResults }, ref) => {
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,13 +108,21 @@ export default function SearchBar({ onResults }: { onResults?: (matches: any[]) 
         console.warn(`⚠️ Filtered out ${matches.length - validMatches.length} invalid results`);
       }
       
-      if (onResults) onResults(validMatches);
+      if (onResults) onResults(validMatches, q);
     } catch (err: any) {
       setError(err?.message || String(err));
     } finally {
       setLoading(false);
     }
   }
+
+  // Expose triggerSearch method via ref
+  useImperativeHandle(ref, () => ({
+    triggerSearch: (query: string) => {
+      setValue(query);
+      doSearch(query);
+    }
+  }));
 
   return (
     <div style={{ width: '100%' }}>
@@ -181,4 +193,8 @@ export default function SearchBar({ onResults }: { onResults?: (matches: any[]) 
       </div>
     </div>
   );
-}
+});
+
+SearchBar.displayName = 'SearchBar';
+
+export default SearchBar;

@@ -1,9 +1,25 @@
 "use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import SearchBar from '@/components/SearchBar';
+import ResultPanel from '@/components/ResultPanel';
 
 export default function LivingLabPage() {
+  const router = useRouter();
   const [results, setResults] = useState<any[] | null>(null);
+  const [selectedLabId, setSelectedLabId] = useState<string | null>(null);
+
+  // Handle search results - redirect to homepage with query
+  const handleSearchResults = (matches: any[], query: string) => {
+    // Navigate to homepage with search query parameter
+    router.push(`/?q=${encodeURIComponent(query)}`);
+  };
+
+  // Handle media selection
+  const handleMediaSelect = (id: string | null) => {
+    setSelectedLabId(id);
+  };
 
   return (
     <div style={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
@@ -91,11 +107,7 @@ export default function LivingLabPage() {
 
           {/* Center: Search bar - wraps to next line on smaller screens */}
           <div className="search-bar-wrapper" style={{ flex: '1 1 300px', maxWidth: '600px', minWidth: '300px', padding: '0 24px' }}>
-            <input 
-              type="text" 
-              placeholder="Search..." 
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
+            <SearchBar onResults={handleSearchResults} />
           </div>
 
           {/* Right side: two H2s */}
@@ -115,6 +127,60 @@ export default function LivingLabPage() {
           </div>
         </div>
       </header>
+
+      {/* Content area - Results display */}
+      <div style={{ 
+        flex: 1, 
+        display: 'flex',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          position: 'relative'
+        }}>
+          {/* Results Panel */}
+          {results && results.length > 0 ? (
+            <div style={{ 
+              width: '100%', 
+              boxSizing: 'border-box', 
+              padding: '24px',
+              backgroundColor: '#fff'
+            }}>
+              <h2 style={{ 
+                fontFamily: 'Quantico, sans-serif', 
+                color: 'var(--tertiary-clr-100)',
+                marginBottom: '16px'
+              }}>
+                Lab Work & Media
+              </h2>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {results
+                  .filter((r) => r && typeof r === 'object')
+                  .map((r, i) => {
+                    const key = r.id || r._id || `result-${i}`;
+                    return <ResultPanel key={key} result={r} selectedId={selectedLabId} onSelect={handleMediaSelect} />;
+                  })}
+              </div>
+            </div>
+          ) : (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              fontFamily: 'Onest, sans-serif',
+              fontSize: '18px',
+              color: '#666'
+            }}>
+              {results === null ? 'Search for lab work and media above' : 'No results found'}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
