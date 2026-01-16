@@ -156,35 +156,38 @@ export default function Home() {
           flex: selectedMedia ? '0 0 66.67%' : '1',
           display: 'flex',
           flexDirection: 'column',
-          overflowY: results && results.length > 0 ? 'auto' : 'hidden',
+          overflowY: 'hidden',
           overflowX: 'hidden',
           position: 'relative',
           transition: 'flex 0.3s ease'
         }}>
-          {/* Sticky Scene at top */}
+          {/* Map - extends to fill space when result is selected */}
           <div style={{ 
-            position: 'sticky',
-            top: 0,
-            height: results && results.length > 0 ? '40vh' : '100%',
-            minHeight: results && results.length > 0 ? '40vh' : 'auto',
-            zIndex: 1,
-            backgroundColor: '#fff'
+            flex: selectedLabId && results && results.length > 0 ? 1 : (results && results.length > 0 ? '0 0 40vh' : 1),
+            minHeight: selectedLabId && results && results.length > 0 ? 0 : (results && results.length > 0 ? '40vh' : 'auto'),
+            backgroundColor: '#fff',
+            transition: 'flex 0.3s ease, min-height 0.3s ease'
           }}>
             <Scene />
           </div>
 
-          {/* Scrollable Results below */}
+          {/* Results at bottom - shows all or just selected one */}
           {results && results.length > 0 && (
             <div style={{ 
               width: '100%', 
               boxSizing: 'border-box', 
-              padding: '24px',
+              padding: selectedLabId ? '0' : '24px',
               backgroundColor: '#fff',
-              boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)'
+              boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)',
+              flex: '0 0 auto',
+              overflowY: selectedLabId ? 'hidden' : 'auto',
+              maxHeight: selectedLabId ? 'auto' : '60vh',
+              transition: 'padding 0.3s ease'
             }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: selectedLabId ? 0 : 8 }}>
                 {results
                   .filter((r) => r && typeof r === 'object')
+                  .filter((r) => !selectedLabId || (r.id || r._id) === selectedLabId)
                   .map((r, i) => {
                     const key = r.id || r._id || `result-${i}`;
                     return <ResultPanel key={key} result={r} selectedId={selectedLabId} onSelect={handleMediaSelect} />;
