@@ -130,7 +130,7 @@ const SearchBar = forwardRef<any, SearchBarProps>(({ onResults }, ref) => {
         display: 'flex', 
         alignItems: 'center', 
         gap: '8px',
-        backgroundColor: 'white',
+        backgroundColor: 'var(--background-clr-400)',
         borderRadius: 16,
         boxShadow: '0 4px 6px 2px #0021474D',
         paddingRight: '12px'
@@ -155,7 +155,8 @@ const SearchBar = forwardRef<any, SearchBarProps>(({ onResults }, ref) => {
             padding: '0 0 0 16px',
             border: 'none',
             outline: 'none',
-            backgroundColor: 'transparent',
+            backgroundColor: 'var(--background-clr-400)',
+            borderRadius: 16,
           }}
         />
         <img 

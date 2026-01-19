@@ -1,3 +1,5 @@
+/* Hero Page */
+
 "use client";
 
 import Preload from '@/components/Preload';
@@ -43,7 +45,7 @@ export default function Home() {
       {/* Header - responsive layout with search bar */}
       <header
         style={{
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--background-clr-400)',
           minHeight: 60,
           display: 'flex',
           flexWrap: 'wrap',
@@ -118,7 +120,7 @@ export default function Home() {
         }}>
           {/* Left side: logo and H1 */}
           <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: 24, flexShrink: 0 }}>
-            <img className="header-logo" src="/logo.jpg" alt="Logo" style={{ height: 60, marginLeft: 24 }} />
+            <img className="header-logo" src="/logo.jpg" alt="Logo" style={{ height: 60, marginLeft: 24, mixBlendMode: 'multiply' }} />
             <h1 className="header-title" style={{ margin: 0, fontFamily: 'Quantico, sans-serif', color: 'var(--tertiary-clr-100)', whiteSpace: 'nowrap' }}>Living Labs</h1>
           </div>
 
@@ -165,7 +167,7 @@ export default function Home() {
           <div style={{ 
             flex: selectedLabId && results && results.length > 0 ? 1 : (results && results.length > 0 ? '0 0 40vh' : 1),
             minHeight: selectedLabId && results && results.length > 0 ? 0 : (results && results.length > 0 ? '40vh' : 'auto'),
-            backgroundColor: '#fff',
+            backgroundColor: 'var(--background-clr-400)',
             transition: 'flex 0.3s ease, min-height 0.3s ease'
           }}>
             <Scene />
@@ -177,7 +179,7 @@ export default function Home() {
               width: '100%', 
               boxSizing: 'border-box', 
               padding: selectedLabId ? '0' : '24px',
-              backgroundColor: '#fff',
+              backgroundColor: 'var(--background-clr-400)',
               boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)',
               flex: '0 0 auto',
               overflowY: selectedLabId ? 'hidden' : 'auto',

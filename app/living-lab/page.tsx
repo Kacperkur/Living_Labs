@@ -26,7 +26,7 @@ export default function LivingLabPage() {
       {/* Header - responsive layout with search bar */}
       <header
         style={{
-          backgroundColor: '#FFFFFF',
+          backgroundColor: 'var(--background-clr-400)',
           minHeight: 60,
           display: 'flex',
           flexWrap: 'wrap',
@@ -101,7 +101,7 @@ export default function LivingLabPage() {
         }}>
           {/* Left side: logo and H1 */}
           <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: 24, flexShrink: 0 }}>
-            <img className="header-logo" src="/logo.jpg" alt="Logo" style={{ height: 60, marginLeft: 24 }} />
+            <img className="header-logo" src="/logo.jpg" alt="Logo" style={{ height: 60, marginLeft: 24, mixBlendMode: 'multiply' }} />
             <h1 className="header-title" style={{ margin: 0, fontFamily: 'Quantico, sans-serif', color: 'var(--tertiary-clr-100)', whiteSpace: 'nowrap' }}>Living Labs</h1>
           </div>
 
@@ -148,7 +148,7 @@ export default function LivingLabPage() {
               width: '100%', 
               boxSizing: 'border-box', 
               padding: '24px',
-              backgroundColor: '#fff'
+              backgroundColor: 'var(--background-clr-400)'
             }}>
               <h2 style={{ 
                 fontFamily: 'Quantico, sans-serif', 

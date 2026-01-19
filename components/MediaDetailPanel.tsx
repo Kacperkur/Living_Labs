@@ -78,7 +78,7 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
       display: 'flex',
       flexDirection: 'column',
       borderLeft: '2px solid #e0e0e0',
-      backgroundColor: '#f9fafb',
+      backgroundColor: 'var(--background-clr-400)',
       overflow: 'hidden',
       position: 'relative'
     }}>
@@ -88,7 +88,7 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
           width: '100%',
           height: '25%',
           overflow: 'hidden',
-          backgroundColor: '#000',
+          backgroundColor: 'var(--background-clr-400)',
           position: 'relative'
         }}>
           <img
@@ -123,7 +123,7 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
           top: 16,
           right: 16,
           zIndex: 10,
-          background: 'rgba(255, 255, 255, 0.9)',
+          background: 'var(--background-clr-400)',
           border: 'none',
           borderRadius: '50%',
           width: 40,
@@ -223,7 +223,7 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
                 marginBottom: 20,
                 lineHeight: 1.6,
                 padding: 16,
-                backgroundColor: '#fff',
+                backgroundColor: 'var(--background-clr-400)',
                 borderRadius: 6,
                 border: '1px solid #e0e0e0'
               }}>
@@ -288,7 +288,7 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
                           const target = e.target as HTMLImageElement;
                           // Replace with text fallback
                           const div = document.createElement('div');
-                          div.style.cssText = 'padding: 8px 12px; background-color: #fff; border-radius: 4px; font-family: Onest, sans-serif; font-size: 12px; color: var(--tertiary-clr-100); border: 1px solid #ddd;';
+                          div.style.cssText = 'padding: 8px 12px; background-color: var(--background-clr-400); border-radius: 4px; font-family: Onest, sans-serif; font-size: 12px; color: var(--tertiary-clr-100); border: 1px solid #ddd;';
                           div.textContent = filename;
                           target.parentNode?.replaceChild(div, target);
                         }}

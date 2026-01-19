@@ -102,7 +102,7 @@ export default function ResultPanel({ result, selectedId, onSelect }: ResultPane
           width: '100vw', 
           boxSizing: 'border-box', 
           padding: 16, 
-          background: isSelected ? 'rgba(117, 178, 221, 0.15)' : '#f9fafb', 
+          background: isSelected ? 'rgba(117, 178, 221, 0.15)' : 'var(--background-clr-400)', 
           borderBottom: '1px solid #eee', 
           cursor: 'pointer',
           borderLeft: isSelected ? '4px solid var(--primary-clr-300)' : '4px solid transparent',
@@ -120,7 +120,7 @@ export default function ResultPanel({ result, selectedId, onSelect }: ResultPane
             style={{ 
               width: 160, 
               height: 100, 
-              background: '#fff', 
+              background: 'var(--background-clr-400)', 
               border: '1px solid #ddd', 
               borderRadius: 6, 
               overflow: 'hidden', 
@@ -164,7 +164,7 @@ export default function ResultPanel({ result, selectedId, onSelect }: ResultPane
                 position: 'relative', 
                 width: '100%', 
                 height: '100%',
-                background: '#000',
+                background: 'var(--background-clr-400)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
@@ -199,7 +199,7 @@ export default function ResultPanel({ result, selectedId, onSelect }: ResultPane
                   position: 'absolute',
                   bottom: 8,
                   right: 8,
-                  backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                  backgroundColor: 'var(--background-clr-400)',
                   color: 'white',
                   padding: '2px 6px',
                   borderRadius: 4,
@@ -309,7 +309,7 @@ export default function ResultPanel({ result, selectedId, onSelect }: ResultPane
         width: '100vw', 
         boxSizing: 'border-box', 
         padding: 16, 
-        background: isSelected ? 'rgba(117, 178, 221, 0.15)' : '#f9fafb', 
+        background: isSelected ? 'rgba(117, 178, 221, 0.15)' : 'var(--background-clr-400)', 
         borderBottom: '1px solid #eee',
         cursor: 'pointer',
         borderLeft: isSelected ? '4px solid var(--primary-clr-300)' : '4px solid transparent',
@@ -322,7 +322,7 @@ export default function ResultPanel({ result, selectedId, onSelect }: ResultPane
         }
       }}
     >
-      <div style={{ maxWidth: 780, margin: '0 auto', background: '#fff', border: '1px solid #e6e6e6', borderRadius: 8, padding: 20, display: 'flex', alignItems: 'center', minHeight: 120 }}>
+      <div style={{ maxWidth: 780, margin: '0 auto', background: 'var(--background-clr-400)', border: '1px solid #e6e6e6', borderRadius: 8, padding: 20, display: 'flex', alignItems: 'center', minHeight: 120 }}>
         <div style={{ width: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 24, fontWeight: 700, marginBottom: 8, color: 'var(--tertiary-clr-100)' }}>{title}</div>
