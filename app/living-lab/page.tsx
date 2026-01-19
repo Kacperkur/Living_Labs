@@ -128,35 +128,211 @@ export default function LivingLabPage() {
         </div>
       </header>
 
-      {/* Content area - Results display */}
+      {/* Content area - Lab Profile */}
       <div style={{ 
         flex: 1, 
         display: 'flex',
         overflow: 'hidden'
       }}>
+        {/* Parent Flexbox Container */}
         <div style={{
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
           overflowY: 'auto',
           overflowX: 'hidden',
-          position: 'relative'
+          padding: '24px',
+          gap: '24px',
+          backgroundColor: 'var(--background-clr-400)'
         }}>
-          {/* Results Panel */}
-          {results && results.length > 0 ? (
-            <div style={{ 
-              width: '100%', 
-              boxSizing: 'border-box', 
-              padding: '24px',
-              backgroundColor: 'var(--background-clr-400)'
+          
+          {/* Child 1: Header Row - Image + Title/Location/SDG */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: '24px',
+            backgroundColor: 'var(--background-clr-400)',
+            padding: '20px',
+            borderRadius: '8px'
+          }}>
+            {/* Lab Image - 50% width */}
+            <div style={{
+              flex: '0 0 50%',
+              minHeight: '300px',
+              backgroundColor: '#ddd',
+              borderRadius: '8px',
+              overflow: 'hidden'
             }}>
-              <h2 style={{ 
-                fontFamily: 'Quantico, sans-serif', 
+              <img 
+                src="/placeholder-lab.jpg" 
+                alt="Lab Location"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+            </div>
+            
+            {/* Info Section - Vertically aligned */}
+            <div style={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-start',
+              alignItems: 'flex-start',
+              gap: '16px'
+            }}>
+              {/* Title */}
+              <h1 style={{
+                fontFamily: 'Quantico, sans-serif',
+                fontSize: '32px',
+                fontWeight: 700,
                 color: 'var(--tertiary-clr-100)',
-                marginBottom: '16px'
+                margin: 0
               }}>
-                Lab Work & Media
-              </h2>
+                Lab Title
+              </h1>
+              
+              {/* Location */}
+              <p style={{
+                fontFamily: 'Onest, sans-serif',
+                fontSize: '18px',
+                color: '#666',
+                margin: 0
+              }}>
+                📍 Lab Location
+              </p>
+              
+              {/* SDG Icons */}
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                flexWrap: 'wrap'
+              }}>
+                <div style={{
+                  fontFamily: 'Onest, sans-serif',
+                  fontSize: '14px',
+                  color: 'var(--tertiary-clr-100)',
+                  fontWeight: 600
+                }}>
+                  SDGs:
+                </div>
+                {/* SDG icons will go here */}
+                <div style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  backgroundColor: '#ccc', 
+                  borderRadius: '4px' 
+                }} />
+                <div style={{ 
+                  width: '48px', 
+                  height: '48px', 
+                  backgroundColor: '#ccc', 
+                  borderRadius: '4px' 
+                }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Child 2: Biography */}
+          <div style={{
+            backgroundColor: 'var(--background-clr-400)',
+            padding: '20px',
+            borderRadius: '8px'
+          }}>
+            <h2 style={{
+              fontFamily: 'Quantico, sans-serif',
+              fontSize: '24px',
+              fontWeight: 700,
+              color: 'var(--tertiary-clr-100)',
+              marginTop: 0,
+              marginBottom: '12px'
+            }}>
+              Biography
+            </h2>
+            <p style={{
+              fontFamily: 'Onest, sans-serif',
+              fontSize: '16px',
+              lineHeight: 1.6,
+              color: '#555',
+              margin: 0
+            }}>
+              Lab biography text will go here. This section will contain detailed information about the lab's mission, goals, and activities.
+            </p>
+          </div>
+
+          {/* Child 3: Metrics Collected */}
+          <div style={{
+            backgroundColor: 'var(--background-clr-400)',
+            padding: '20px',
+            borderRadius: '8px'
+          }}>
+            <h2 style={{
+              fontFamily: 'Quantico, sans-serif',
+              fontSize: '24px',
+              fontWeight: 700,
+              color: 'var(--tertiary-clr-100)',
+              marginTop: 0,
+              marginBottom: '12px'
+            }}>
+              Metrics Collected
+            </h2>
+            <p style={{
+              fontFamily: 'Onest, sans-serif',
+              fontSize: '16px',
+              lineHeight: 1.6,
+              color: '#555',
+              margin: 0
+            }}>
+              Metrics data will be displayed here.
+            </p>
+          </div>
+
+          {/* Child 4: Members */}
+          <div style={{
+            backgroundColor: 'var(--background-clr-400)',
+            padding: '20px',
+            borderRadius: '8px'
+          }}>
+            <h2 style={{
+              fontFamily: 'Quantico, sans-serif',
+              fontSize: '24px',
+              fontWeight: 700,
+              color: 'var(--tertiary-clr-100)',
+              marginTop: 0,
+              marginBottom: '12px'
+            }}>
+              Members
+            </h2>
+            <p style={{
+              fontFamily: 'Onest, sans-serif',
+              fontSize: '16px',
+              lineHeight: 1.6,
+              color: '#555',
+              margin: 0
+            }}>
+              Lab members will be listed here.
+            </p>
+          </div>
+
+          {/* Child 5: Lab Media - ResultPanel */}
+          <div style={{
+            backgroundColor: 'var(--background-clr-400)',
+            padding: '20px',
+            borderRadius: '8px'
+          }}>
+            <h2 style={{
+              fontFamily: 'Quantico, sans-serif',
+              fontSize: '24px',
+              fontWeight: 700,
+              color: 'var(--tertiary-clr-100)',
+              marginTop: 0,
+              marginBottom: '16px'
+            }}>
+              Lab Work & Media
+            </h2>
+            {results && results.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {results
                   .filter((r) => r && typeof r === 'object')
@@ -165,22 +341,22 @@ export default function LivingLabPage() {
                     return <ResultPanel key={key} result={r} selectedId={selectedLabId} onSelect={handleMediaSelect} />;
                   })}
               </div>
-            </div>
-          ) : (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              fontFamily: 'Onest, sans-serif',
-              fontSize: '18px',
-              color: '#666'
-            }}>
-              {results === null ? 'Search for lab work and media above' : 'No results found'}
-            </div>
-          )}
+            ) : (
+              <p style={{
+                fontFamily: 'Onest, sans-serif',
+                fontSize: '16px',
+                color: '#666',
+                textAlign: 'center',
+                padding: '40px 0'
+              }}>
+                {results === null ? 'No media available for this lab' : 'No results found'}
+              </p>
+            )}
+          </div>
+
         </div>
       </div>
     </div>
+    
   );
 }
