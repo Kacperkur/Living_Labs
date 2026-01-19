@@ -3,7 +3,7 @@
 
 :root{
 
---background-clr-400:#FFFFFF;
+--background-clr-400:#f2f3f4;;
 --primary-clr-300:#75B2DD; /* used for buttons and highlights */
 --secondary-clr-200:#EFCB68; /* used for on hover or state change */
 --tertiary-clr-100:#002147; /*  used for fonts and headings */ 
