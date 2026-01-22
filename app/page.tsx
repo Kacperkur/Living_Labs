@@ -39,118 +39,36 @@ export default function Home() {
   };
 
   return (
-    <div style={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div className="full-height-container">
       {/* Preload model in background */}
       <Preload />
 
       {/* Header - responsive layout with search bar */}
-      <header
-        style={{
-          backgroundColor: 'var(--background-clr-400)',
-          minHeight: 60,
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          padding: '8px 40px 8px 16px',
-          boxSizing: 'border-box',
-          gap: 16,
-          flexShrink: 0,
-        }}
-      >
-        <style dangerouslySetInnerHTML={{__html: `
-          @media (max-width: 1200px) {
-            .search-bar-wrapper {
-              order: 3 !important;
-              flex-basis: 100% !important;
-              max-width: 100% !important;
-              padding: 8px 24px !important;
-            }
-          }
-          
-          @media (max-width: 768px) {
-            .header-container {
-              padding: 8px 16px 8px 8px !important;
-              gap: 8px !important;
-            }
-            .logo-section {
-              gap: 12px !important;
-            }
-            .header-logo {
-              height: 40px !important;
-              margin-left: 8px !important;
-            }
-            .header-title {
-              font-size: 20px !important;
-            }
-            .nav-links {
-              gap: 16px !important;
-            }
-            .nav-links h2 {
-              font-size: 18px !important;
-            }
-          }
-          
-          @media (max-width: 480px) {
-            .logo-section {
-              gap: 8px !important;
-            }
-            .header-logo {
-              height: 36px !important;
-              margin-left: 4px !important;
-            }
-            .header-title {
-              font-size: 16px !important;
-            }
-            .nav-links {
-              gap: 12px !important;
-            }
-            .nav-links h2 {
-              font-size: 16px !important;
-            }
-          }
-        `}} />
-        {/* Top row container */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between', 
-          width: '100%',
-          minHeight: 60,
-          flexWrap: 'wrap',
-          gap: 16
-        }}>
+      <header className="header-container">
+        <div className="header-top-row">
           {/* Left side: logo and H1 */}
-          <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: 24, flexShrink: 0 }}>
-            <img className="header-logo" src="/logo.jpg" alt="Logo" style={{ height: 60, marginLeft: 24, mixBlendMode: 'multiply' }} />
-            <h1 className="header-title" style={{ margin: 0, fontFamily: 'Quantico, sans-serif', color: 'var(--tertiary-clr-100)', whiteSpace: 'nowrap' }}>Living Labs</h1>
+          <div className="logo-section">
+            <img className="header-logo" src="/logo.jpg" alt="Logo" />
+            <h1 className="header-title">Living Labs</h1>
           </div>
 
           {/* Center: Search bar - wraps to next line on smaller screens */}
-          <div className="search-bar-wrapper" style={{ flex: '1 1 300px', maxWidth: '600px', minWidth: '300px', padding: '0 24px' }}>
+          <div className="search-bar-wrapper">
             <SearchBar ref={searchBarRef} onResults={(matches, query) => setResults(matches)} />
           </div>
 
           {/* Right side: two H2s */}
-          <div
-            className="nav-links"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 24,
-              fontFamily: 'Quantico, sans-serif',
-              color: 'var(--tertiary-clr-100)',
-              flexShrink: 0,
-            }}
-          >
-            <h2 style={{ margin: 0, whiteSpace: 'nowrap' }}>Our Labs</h2>
-            <h2 style={{ margin: 0, whiteSpace: 'nowrap' }}>Join</h2>
+          <div className="nav-links">
+            <h2>Our Labs</h2>
+            <h2>Join</h2>
           </div>
         </div>
       </header>
 
       {/* Content area - vertical layout with sticky map */}
       <div style={{ 
-        flex: 1, 
+        flex: '1 1 0',
+        minHeight: 0,
         display: 'flex',
         overflow: 'hidden'
       }}>
@@ -159,18 +77,11 @@ export default function Home() {
           flex: selectedMedia ? '0 0 66.67%' : '1',
           display: 'flex',
           flexDirection: 'column',
-          overflowY: 'hidden',
-          overflowX: 'hidden',
           position: 'relative',
           transition: 'flex 0.3s ease'
         }}>
-          {/* Map - extends to fill space when result is selected */}
-          <div style={{ 
-            flex: selectedLabId && results && results.length > 0 ? 1 : (results && results.length > 0 ? '0 0 40vh' : 1),
-            minHeight: selectedLabId && results && results.length > 0 ? 0 : (results && results.length > 0 ? '40vh' : 'auto'),
-            backgroundColor: 'var(--background-clr-400)',
-            transition: 'flex 0.3s ease, min-height 0.3s ease'
-          }}>
+          {/* Map - takes remaining space or full space when no results */}
+          <div className="map-container">
             <Scene />
           </div>
 
@@ -201,10 +112,12 @@ export default function Home() {
         </div>
 
         {/* Right side: 2-Column Media Detail Panel */}
-        <MediaDetailPanel 
-          selectedMedia={selectedMedia}
-          onClose={() => handleMediaSelect(null)}
-        />
+        {selectedMedia && (
+          <MediaDetailPanel 
+            selectedMedia={selectedMedia}
+            onClose={() => handleMediaSelect(null)}
+          />
+        )}
       </div>
     </div>
   );

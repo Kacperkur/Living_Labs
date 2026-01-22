@@ -52,3 +52,6 @@ next-env.d.ts
 # Firebase service account and project files
 livinglabs-1a831
 ARCHITECTURE.md
+STYLING_GUIDE.md
+STYLING_REFACTOR_SUMMARY.md
+STYLING_REFERENCE.md

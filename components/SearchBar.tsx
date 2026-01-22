@@ -128,16 +128,8 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onResults }, re
   }));
 
   return (
-    <div style={{ width: '100%' }}>
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '8px',
-        backgroundColor: 'var(--background-clr-400)',
-        borderRadius: 16,
-        boxShadow: '0 4px 6px 2px #0021474D',
-        paddingRight: '12px'
-      }}>
+    <div className="search-bar-container">
+      <div className="search-bar-input-group">
         <input
           type="text"
           value={value}
@@ -150,17 +142,7 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onResults }, re
             }
           }}
           placeholder="Search..."
-          style={{
-            flex: 1,
-            height: '4vh',
-            fontFamily: 'Onest, serif',
-            fontSize: 16,
-            padding: '0 0 0 16px',
-            border: 'none',
-            outline: 'none',
-            backgroundColor: 'var(--background-clr-400)',
-            borderRadius: 16,
-          }}
+          className="search-bar-input"
         />
         <img 
           src="/loupe.png" 
@@ -170,30 +152,13 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onResults }, re
             if (!q) return;
             doSearch(q);
           }}
-          style={{
-            height: '32px',
-            width: '20px',
-            objectFit: 'contain',
-            flexShrink: 0,
-            cursor: 'pointer',
-            opacity: 0.7,
-            transition: 'all 0.2s',
-            filter: 'none'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = '1';
-            e.currentTarget.style.filter = 'brightness(0) saturate(100%) invert(76%) sepia(52%) saturate(452%) hue-rotate(357deg) brightness(98%) contrast(92%)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = '0.7';
-            e.currentTarget.style.filter = 'none';
-          }}
+          className="search-bar-icon"
         />
       </div>
 
-      <div style={{ marginTop: 8 }}>
+      <div className="mt-2">
         {loading && <div>Searching...</div>}
-        {error && <div style={{ color: 'crimson' }}>Error: {error}</div>}
+        {error && <div className="text-red-600">Error: {error}</div>}
       </div>
     </div>
   );
