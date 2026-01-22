@@ -10,13 +10,14 @@ import ResultPanel from '@/components/ResultPanel';
 import MediaDetailPanel from '@/components/MediaDetailPanel';
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { SearchResult, SearchBarHandle } from '@/types';
 
 export default function Home() {
   const searchParams = useSearchParams();
-  const searchBarRef = useRef<any>(null);
-  const [results, setResults] = useState<any[] | null>(null);
+  const searchBarRef = useRef<SearchBarHandle | null>(null);
+  const [results, setResults] = useState<SearchResult[] | null>(null);
   const [selectedLabId, setSelectedLabId] = useState<string | null>(null);
-  const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<SearchResult | null>(null);
 
   // Handle search from URL query parameter
   useEffect(() => {
@@ -30,8 +31,8 @@ export default function Home() {
   const handleMediaSelect = (id: string | null) => {
     setSelectedLabId(id);
     if (id && results) {
-      const media = results.find(r => (r.id || r._id) === id);
-      setSelectedMedia(media);
+      const media = results.find(r => r.id === id);
+      setSelectedMedia(media || null);
     } else {
       setSelectedMedia(null);
     }
@@ -189,9 +190,9 @@ export default function Home() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: selectedLabId ? 0 : 8 }}>
                 {results
                   .filter((r) => r && typeof r === 'object')
-                  .filter((r) => !selectedLabId || (r.id || r._id) === selectedLabId)
+                  .filter((r) => !selectedLabId || r.id === selectedLabId)
                   .map((r, i) => {
-                    const key = r.id || r._id || `result-${i}`;
+                    const key = r.id || `result-${i}`;
                     return <ResultPanel key={key} result={r} selectedId={selectedLabId} onSelect={handleMediaSelect} />;
                   })}
               </div>

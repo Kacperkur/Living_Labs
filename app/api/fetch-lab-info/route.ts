@@ -1,5 +1,6 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { NextResponse } from 'next/server';
+import { LabInfoResponse, PineconeMetadata } from '../../../types';
 
 const apiKey = process.env.PINECONE_API_KEY;
 if (!apiKey) console.warn("⚠️ Missing PINECONE_API_KEY environment variable");
@@ -65,16 +66,16 @@ export async function GET(req: Request) {
     }
     
     const record = response.records[labId];
-    const metadata = record.metadata || {};
+    const metadata = (record.metadata || {}) as PineconeMetadata;
     
     // Extract lab information from Pinecone metadata
-    const labInfo = {
+    const labInfo: LabInfoResponse = {
       id: labId,
-      name: metadata.name || null,
-      location: metadata.location || null,
-      start_date: metadata.start_date || null,
-      end_date: metadata.end_date || null,
-      biography: metadata.biography || null,
+      name: typeof metadata.name === 'string' ? metadata.name : null,
+      location: typeof metadata.location === 'string' ? metadata.location : null,
+      start_date: typeof metadata.start_date === 'string' ? metadata.start_date : null,
+      end_date: typeof metadata.end_date === 'string' ? metadata.end_date : null,
+      biography: typeof metadata.biography === 'string' ? metadata.biography : null,
       SDGs: Array.isArray(metadata.SDGs) ? metadata.SDGs : []
     };
     
@@ -82,10 +83,11 @@ export async function GET(req: Request) {
     
     return NextResponse.json(labInfo);
     
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Failed to fetch lab info";
     console.error("❌ Fetch Lab Info API Error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch lab info" },
+      { error: errorMessage },
       { status: 500 }
     );
   }

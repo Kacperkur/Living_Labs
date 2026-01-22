@@ -2,31 +2,17 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-
-type MediaDetailPanelProps = {
-  selectedMedia: any;
-  onClose: () => void;
-};
-
-type LabInfo = {
-  id: string;
-  name: string | null;
-  location: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  biography: string | null;
-  SDGs: Array<{ content_url?: string; name?: string }>;
-};
+import { MediaDetailPanelProps, Lab, formatDate, toLabInfo } from '../types';
 
 export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetailPanelProps) {
-  const [labInfo, setLabInfo] = useState<LabInfo | null>(null);
+  const [labInfo, setLabInfo] = useState<Lab | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchLabInfo = async () => {
       if (!selectedMedia) return;
       
-      const labId = selectedMedia?.lab_id || selectedMedia?.labId || selectedMedia?.metadata?.lab_id;
+      const labId = selectedMedia?.lab_id || selectedMedia?.metadata?.lab_id;
       if (!labId) return;
 
       setLoading(true);
@@ -40,11 +26,13 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
           return;
         }
         
-        const data = await response.json();
+        const rawData = await response.json();
+        const data = toLabInfo(rawData);
         console.log('✅ Lab Info:', data);
         setLabInfo(data);
-      } catch (error) {
-        console.error('❌ Error fetching lab info:', error);
+      } catch (error: unknown) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('❌ Error fetching lab info:', errorMessage);
       } finally {
         setLoading(false);
       }
@@ -54,23 +42,6 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
   }, [selectedMedia]);
 
   if (!selectedMedia) return null;
-
-  // Format date as "Month Name Day, Year"
-  const formatDate = (dateStr: string | null): string | null => {
-    if (!dateStr) return null;
-    try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return null;
-      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                          'July', 'August', 'September', 'October', 'November', 'December'];
-      const month = monthNames[date.getMonth()];
-      const day = date.getDate();
-      const year = date.getFullYear();
-      return `${month} ${day}, ${year}`;
-    } catch {
-      return null;
-    }
-  };
 
   return (
     <div style={{

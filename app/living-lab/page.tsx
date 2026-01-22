@@ -4,14 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SearchBar from '@/components/SearchBar';
 import ResultPanel from '@/components/ResultPanel';
+import { SearchResult } from '@/types';
 
 export default function LivingLabPage() {
   const router = useRouter();
-  const [results, setResults] = useState<any[] | null>(null);
+  const [results, setResults] = useState<SearchResult[] | null>(null);
   const [selectedLabId, setSelectedLabId] = useState<string | null>(null);
 
   // Handle search results - redirect to homepage with query
-  const handleSearchResults = (matches: any[], query: string) => {
+  const handleSearchResults = (matches: SearchResult[], query: string) => {
     // Navigate to homepage with search query parameter
     router.push(`/?q=${encodeURIComponent(query)}`);
   };
@@ -161,7 +162,7 @@ export default function LivingLabPage() {
                 {results
                   .filter((r) => r && typeof r === 'object')
                   .map((r, i) => {
-                    const key = r.id || r._id || `result-${i}`;
+                    const key = r.id || `result-${i}`;
                     return <ResultPanel key={key} result={r} selectedId={selectedLabId} onSelect={handleMediaSelect} />;
                   })}
               </div>

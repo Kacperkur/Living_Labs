@@ -1,14 +1,21 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { getAdmin } from '../../../firebase-config';
 import { NextResponse } from 'next/server';
-import { Timestamp } from 'firebase-admin/firestore';
+import { Timestamp, Firestore } from 'firebase-admin/firestore';
+import { 
+  SearchRequest, 
+  SearchResponse, 
+  EnrichedMedia, 
+  EnrichmentResult,
+  PineconeMetadata 
+} from '../../../types';
 
 const apiKey = process.env.PINECONE_API_KEY;
 if (!apiKey) console.warn("⚠️ Missing PINECONE_API_KEY environment variable");
 
 const pc = new Pinecone({ apiKey: apiKey as string });
 const index = pc.index("livinglabsdemo").namespace("media");
-let db: any = null;
+let db: Firestore | null = null;
 
 /**
  * Enhanced search route that combines Pinecone semantic search with Firebase enrichment.
@@ -41,20 +48,12 @@ let db: any = null;
  */
 
 // Helper: search Firebase by document IDs - simplified for media collection only
-async function enrichWithFirestore(mediaIds: string[]) {
+async function enrichWithFirestore(mediaIds: string[]): Promise<EnrichmentResult> {
   try {
     const ids = Array.from(new Set(mediaIds.filter(Boolean))) as string[];
     if (ids.length === 0) return { enriched: [], notFound: [] };
 
-    const enriched: Array<{
-      id: string;
-      title: string | null;
-      author: string | null;
-      content_url: string | null;
-      lab_id: string | null;
-      lab_name: string | null;
-      published: Timestamp | null;
-    }> = [];
+    const enriched: EnrichedMedia[] = [];
     
     // Only search the 'media' collection
     const mediaCollection = db.collection('media');
@@ -106,7 +105,7 @@ async function enrichWithFirestore(mediaIds: string[]) {
 }
 
 // Helper: extract title from document data
-function extractTitle(data: any): string | null {
+function extractTitle(data: Record<string, unknown> | undefined): string | null {
   if (!data) return null;
   
   return (
@@ -124,7 +123,7 @@ function extractTitle(data: any): string | null {
 }
 
 // Helper: extract author from document data
-function extractAuthor(data: any): string | null {
+function extractAuthor(data: Record<string, unknown> | undefined): string | null {
   if (!data) return null;
   
   const author = (
@@ -152,7 +151,7 @@ function extractAuthor(data: any): string | null {
 }
 
 // Helper: extract content_url from document data
-function extractContentUrl(data: any): string | null {
+function extractContentUrl(data: Record<string, unknown> | undefined): string | null {
   if (!data) return null;
   
   return (
@@ -175,7 +174,7 @@ function extractContentUrl(data: any): string | null {
 }
 
 // Helper: extract lab_id from document data (handles Firestore references)
-function extractLabId(data: any): string | null {
+function extractLabId(data: Record<string, unknown> | undefined): string | null {
   if (!data) return null;
   
   const labRef = (
@@ -200,7 +199,7 @@ function extractLabId(data: any): string | null {
 }
 
 // Helper: extract lab_name directly from document data
-function extractLabName(data: any): string | null {
+function extractLabName(data: Record<string, unknown> | undefined): string | null {
   if (!data) return null;
   
   return (
@@ -224,7 +223,8 @@ function extractLabName(data: any): string | null {
 
 export async function POST(req: Request) {
   try {
-    const { query: queryText, topK = 5 } = await req.json();
+    const body = await req.json() as SearchRequest;
+    const { query: queryText, topK = 5 } = body;
 
     if (!apiKey) {
       return NextResponse.json(
@@ -253,7 +253,7 @@ export async function POST(req: Request) {
 
     const hits = pineconeRes?.result?.hits ?? [];
 
-    function extractRecordIdFromHit(h: any): string | null {
+    function extractRecordIdFromHit(h: Record<string, unknown>): string | null {
       if (!h) return null;
       if (h.record && typeof h.record.id === 'string' && h.record.id) return h.record.id;
       if (typeof h.id === 'string' && h.id) return h.id;
@@ -268,7 +268,7 @@ export async function POST(req: Request) {
     console.log(`📍 Pinecone found ${hits.length} hits`);
     console.log('📍 Extracted mediaIds:', mediaIds);
 
-    const hitsMissingId = hits.filter((h: any) => !extractRecordIdFromHit(h));
+    const hitsMissingId = hits.filter((h: Record<string, unknown>) => !extractRecordIdFromHit(h));
     if (hitsMissingId.length > 0) {
       console.warn('Some Pinecone hits are missing an extractable record ID:', hitsMissingId.slice(0,5));
     }
@@ -283,7 +283,7 @@ export async function POST(req: Request) {
     console.log(`🔥 Firebase enriched ${enriched.length} documents, ${notFound.length} not found`);
 
     // 3. Combine Pinecone scores/metadata with Firebase document data
-    const results = hits.map((hit: any) => {
+    const results = hits.map((hit: Record<string, unknown>) => {
       const hitId = hit._id;
       const firestoreData = enriched.find(doc => doc.id === hitId);
       
@@ -317,17 +317,20 @@ export async function POST(req: Request) {
       }
     });
 
-    return NextResponse.json({
+    const response: SearchResponse = {
       results,
-      pineconeResults: pineconeRes,
       notFound,
-      count: results.length
-    });
+      count: results.length,
+      pineconeResults: pineconeRes
+    };
+    
+    return NextResponse.json(response);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : "Search failed";
     console.error("❌ Enhanced Search API Error:", error);
     return NextResponse.json(
-      { error: error.message || "Search failed" },
+      { error: errorMessage },
       { status: 500 }
     );
   }
