@@ -1,17 +1,14 @@
 "use client";
 
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
+import { SearchBarProps, SearchBarHandle, SearchResult, SearchResponse, toSearchResponse } from '../types';
 
-type SearchBarProps = {
-  onResults?: (matches: any[], query: string) => void;
-};
-
-const SearchBar = forwardRef<any, SearchBarProps>(({ onResults }, ref) => {
+const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onResults }, ref) => {
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function doSearch(q: string) {
+  async function doSearch(q: string): Promise<void> {
   setLoading(true);
   setError(null);
     try {
@@ -23,45 +20,46 @@ const SearchBar = forwardRef<any, SearchBarProps>(({ onResults }, ref) => {
       });
 
       if (!res.ok) {
-        const payload = await res.json().catch(() => ({}));
+        const payload = await res.json().catch(() => ({ error: 'Unknown error' }));
         throw new Error(payload?.error || `Server returned ${res.status}`);
       }
 
-      const data = await res.json();
+      const rawData = await res.json();
+      const data: SearchResponse = toSearchResponse(rawData);
 
       // Helper function to deeply clean any object of Firestore references
-      function cleanFirestoreRefs(obj: any): any {
+      function cleanFirestoreRefs(obj: unknown): unknown {
         if (obj === null || obj === undefined) return obj;
         if (typeof obj !== 'object') return obj;
         if (Array.isArray(obj)) return obj.map(cleanFirestoreRefs);
         
         // If this looks like a Firestore reference, return null
-        if (obj._firestore || obj._path || obj._converter) {
+        const objRecord = obj as Record<string, unknown>;
+        if (objRecord._firestore || objRecord._path || objRecord._converter) {
           console.warn('Removed Firestore reference:', obj);
           return null;
         }
         
         // Clean all properties recursively
-        const cleaned: any = {};
-        for (const [key, value] of Object.entries(obj)) {
+        const cleaned: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(objRecord)) {
           cleaned[key] = cleanFirestoreRefs(value);
         }
         return cleaned;
       }
 
       // The enhanced route returns simplified results with title, author, content_url, and lab_id
-      let matches: any[] = [];
+      let matches: SearchResult[] = [];
       if (Array.isArray(data.results)) {
         // Transform enhanced results to match ResultPanel expectations
-        matches = data.results.map((result: any) => {
-          const cleanResult = {
+        matches = data.results.map((result: SearchResult): SearchResult => {
+          const cleanResult: SearchResult = {
             id: result.id,
             title: result.title,
             author: result.author,
             content_url: result.content_url,
             lab_id: result.lab_id,
             lab_name: result.lab_name,
-            labName: result.lab_name,
             published: result.published,
             collection: result.collection || 'media',
             score: result.score,
@@ -87,21 +85,25 @@ const SearchBar = forwardRef<any, SearchBarProps>(({ onResults }, ref) => {
           };
           
           // Final clean pass to remove any remaining Firestore references
-          return cleanFirestoreRefs(cleanResult);
+          return cleanFirestoreRefs(cleanResult) as SearchResult;
         });
       } else {
         // Fallback for other response formats
-        matches = Array.isArray(data) ? data.map(cleanFirestoreRefs) : [cleanFirestoreRefs(data)];
+        matches = Array.isArray(rawData) 
+          ? (rawData as SearchResult[]).map(item => cleanFirestoreRefs(item) as SearchResult)
+          : [cleanFirestoreRefs(rawData) as SearchResult];
       }
 
       console.log(`🔍 Search completed: ${matches.length} results for "${q}"`, matches);
       
       // Filter out any invalid results before passing to UI
-      const validMatches = matches.filter(match => 
-        match && 
+      const validMatches = matches.filter((match): match is SearchResult => 
+        match !== null &&
         typeof match === 'object' && 
         !Array.isArray(match) &&
-        (match.id || match.title) // Must have at least an ID or title
+        'id' in match &&
+        typeof match.id === 'string' &&
+        match.id.length > 0
       );
       
       if (validMatches.length !== matches.length) {
@@ -109,8 +111,9 @@ const SearchBar = forwardRef<any, SearchBarProps>(({ onResults }, ref) => {
       }
       
       if (onResults) onResults(validMatches, q);
-    } catch (err: any) {
-      setError(err?.message || String(err));
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -125,16 +128,8 @@ const SearchBar = forwardRef<any, SearchBarProps>(({ onResults }, ref) => {
   }));
 
   return (
-    <div style={{ width: '100%' }}>
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '8px',
-        backgroundColor: 'var(--background-clr-400)',
-        borderRadius: 16,
-        boxShadow: '0 4px 6px 2px #0021474D',
-        paddingRight: '12px'
-      }}>
+    <div className="search-bar-container">
+      <div className="search-bar-input-group">
         <input
           type="text"
           value={value}
@@ -147,17 +142,7 @@ const SearchBar = forwardRef<any, SearchBarProps>(({ onResults }, ref) => {
             }
           }}
           placeholder="Search..."
-          style={{
-            flex: 1,
-            height: '4vh',
-            fontFamily: 'Onest, serif',
-            fontSize: 16,
-            padding: '0 0 0 16px',
-            border: 'none',
-            outline: 'none',
-            backgroundColor: 'var(--background-clr-400)',
-            borderRadius: 16,
-          }}
+          className="search-bar-input"
         />
         <img 
           src="/loupe.png" 
@@ -167,30 +152,13 @@ const SearchBar = forwardRef<any, SearchBarProps>(({ onResults }, ref) => {
             if (!q) return;
             doSearch(q);
           }}
-          style={{
-            height: '32px',
-            width: '20px',
-            objectFit: 'contain',
-            flexShrink: 0,
-            cursor: 'pointer',
-            opacity: 0.7,
-            transition: 'all 0.2s',
-            filter: 'none'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.opacity = '1';
-            e.currentTarget.style.filter = 'brightness(0) saturate(100%) invert(76%) sepia(52%) saturate(452%) hue-rotate(357deg) brightness(98%) contrast(92%)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.opacity = '0.7';
-            e.currentTarget.style.filter = 'none';
-          }}
+          className="search-bar-icon"
         />
       </div>
 
-      <div style={{ marginTop: 8 }}>
+      <div className="mt-2">
         {loading && <div>Searching...</div>}
-        {error && <div style={{ color: 'crimson' }}>Error: {error}</div>}
+        {error && <div className="text-red-600">Error: {error}</div>}
       </div>
     </div>
   );

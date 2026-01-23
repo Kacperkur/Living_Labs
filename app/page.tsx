@@ -10,13 +10,14 @@ import ResultPanel from '@/components/ResultPanel';
 import MediaDetailPanel from '@/components/MediaDetailPanel';
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { SearchResult, SearchBarHandle } from '@/types';
 
 export default function Home() {
   const searchParams = useSearchParams();
-  const searchBarRef = useRef<any>(null);
-  const [results, setResults] = useState<any[] | null>(null);
+  const searchBarRef = useRef<SearchBarHandle | null>(null);
+  const [results, setResults] = useState<SearchResult[] | null>(null);
   const [selectedLabId, setSelectedLabId] = useState<string | null>(null);
-  const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
+  const [selectedMedia, setSelectedMedia] = useState<SearchResult | null>(null);
 
   // Handle search from URL query parameter
   useEffect(() => {
@@ -30,146 +31,59 @@ export default function Home() {
   const handleMediaSelect = (id: string | null) => {
     setSelectedLabId(id);
     if (id && results) {
-      const media = results.find(r => (r.id || r._id) === id);
-      setSelectedMedia(media);
+      const media = results.find(r => r.id === id);
+      setSelectedMedia(media || null);
     } else {
       setSelectedMedia(null);
     }
   };
 
   return (
-    <div style={{ height: '100vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+    <div className="full-height-container">
       {/* Preload model in background */}
       <Preload />
 
       {/* Header - responsive layout with search bar */}
-      <header
-        style={{
-          backgroundColor: 'var(--background-clr-400)',
-          minHeight: 60,
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          padding: '8px 40px 8px 16px',
-          boxSizing: 'border-box',
-          gap: 16,
-          flexShrink: 0,
-        }}
-      >
-        <style dangerouslySetInnerHTML={{__html: `
-          @media (max-width: 1200px) {
-            .search-bar-wrapper {
-              order: 3 !important;
-              flex-basis: 100% !important;
-              max-width: 100% !important;
-              padding: 8px 24px !important;
-            }
-          }
-          
-          @media (max-width: 768px) {
-            .header-container {
-              padding: 8px 16px 8px 8px !important;
-              gap: 8px !important;
-            }
-            .logo-section {
-              gap: 12px !important;
-            }
-            .header-logo {
-              height: 40px !important;
-              margin-left: 8px !important;
-            }
-            .header-title {
-              font-size: 20px !important;
-            }
-            .nav-links {
-              gap: 16px !important;
-            }
-            .nav-links h2 {
-              font-size: 18px !important;
-            }
-          }
-          
-          @media (max-width: 480px) {
-            .logo-section {
-              gap: 8px !important;
-            }
-            .header-logo {
-              height: 36px !important;
-              margin-left: 4px !important;
-            }
-            .header-title {
-              font-size: 16px !important;
-            }
-            .nav-links {
-              gap: 12px !important;
-            }
-            .nav-links h2 {
-              font-size: 16px !important;
-            }
-          }
-        `}} />
-        {/* Top row container */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between', 
-          width: '100%',
-          minHeight: 60,
-          flexWrap: 'wrap',
-          gap: 16
-        }}>
+      <header className="header-container">
+        <div className="header-top-row">
           {/* Left side: logo and H1 */}
-          <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: 24, flexShrink: 0 }}>
-            <img className="header-logo" src="/logo.jpg" alt="Logo" style={{ height: 60, marginLeft: 24, mixBlendMode: 'multiply' }} />
-            <h1 className="header-title" style={{ margin: 0, fontFamily: 'Quantico, sans-serif', color: 'var(--tertiary-clr-100)', whiteSpace: 'nowrap' }}>Living Labs</h1>
+          <div className="logo-section">
+            <img className="header-logo" src="/logo.jpg" alt="Logo" />
+            <h1 className="header-title">Living Labs</h1>
           </div>
 
           {/* Center: Search bar - wraps to next line on smaller screens */}
-          <div className="search-bar-wrapper" style={{ flex: '1 1 300px', maxWidth: '600px', minWidth: '300px', padding: '0 24px' }}>
+          <div className="search-bar-wrapper">
             <SearchBar ref={searchBarRef} onResults={(matches, query) => setResults(matches)} />
           </div>
 
           {/* Right side: two H2s */}
-          <div
-            className="nav-links"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 24,
-              fontFamily: 'Quantico, sans-serif',
-              color: 'var(--tertiary-clr-100)',
-              flexShrink: 0,
-            }}
-          >
-            <h2 style={{ margin: 0, whiteSpace: 'nowrap' }}>Our Labs</h2>
-            <h2 style={{ margin: 0, whiteSpace: 'nowrap' }}>Join</h2>
+          <div className="nav-links">
+            <h2>Our Labs</h2>
+            <h2>Join</h2>
           </div>
         </div>
       </header>
 
       {/* Content area - vertical layout with sticky map */}
       <div style={{ 
-        flex: 1, 
+        flex: '1 1 0',
+        minHeight: 0,
         display: 'flex',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        position: 'relative'
       }}>
         {/* Left side: Map and Results */}
         <div style={{
-          flex: selectedMedia ? '0 0 66.67%' : '1',
+          width: selectedMedia ? '66.67%' : '100%',
+          height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          overflowY: 'hidden',
-          overflowX: 'hidden',
           position: 'relative',
-          transition: 'flex 0.3s ease'
+          transition: 'width 0.3s ease'
         }}>
-          {/* Map - extends to fill space when result is selected */}
-          <div style={{ 
-            flex: selectedLabId && results && results.length > 0 ? 1 : (results && results.length > 0 ? '0 0 40vh' : 1),
-            minHeight: selectedLabId && results && results.length > 0 ? 0 : (results && results.length > 0 ? '40vh' : 'auto'),
-            backgroundColor: 'var(--background-clr-400)',
-            transition: 'flex 0.3s ease, min-height 0.3s ease'
-          }}>
+          {/* Map - takes remaining space or full space when no results */}
+          <div className="map-container">
             <Scene />
           </div>
 
@@ -189,9 +103,9 @@ export default function Home() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: selectedLabId ? 0 : 8 }}>
                 {results
                   .filter((r) => r && typeof r === 'object')
-                  .filter((r) => !selectedLabId || (r.id || r._id) === selectedLabId)
+                  .filter((r) => !selectedLabId || r.id === selectedLabId)
                   .map((r, i) => {
-                    const key = r.id || r._id || `result-${i}`;
+                    const key = r.id || `result-${i}`;
                     return <ResultPanel key={key} result={r} selectedId={selectedLabId} onSelect={handleMediaSelect} />;
                   })}
               </div>
@@ -200,10 +114,21 @@ export default function Home() {
         </div>
 
         {/* Right side: 2-Column Media Detail Panel */}
-        <MediaDetailPanel 
-          selectedMedia={selectedMedia}
-          onClose={() => handleMediaSelect(null)}
-        />
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '33.33%',
+          height: '100%',
+          transform: selectedMedia ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.3s ease',
+          zIndex: 10
+        }}>
+          <MediaDetailPanel 
+            selectedMedia={selectedMedia}
+            onClose={() => handleMediaSelect(null)}
+          />
+        </div>
       </div>
     </div>
   );

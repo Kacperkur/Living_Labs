@@ -1,20 +1,7 @@
 "use client";
 
 import React from 'react';
-
-type Result = {
-  id?: string;
-  title?: string;
-  authors?: string[] | string;
-  previewUrl?: string | null;
-  [k: string]: any;
-};
-
-type ResultPanelProps = {
-  result: Result;
-  selectedId?: string | null;
-  onSelect?: (id: string | null) => void;
-};
+import { ResultPanelProps, SearchResult, formatDate } from '../types';
 
 export default function ResultPanel({ result, selectedId, onSelect }: ResultPanelProps) {
 
@@ -28,13 +15,17 @@ export default function ResultPanel({ result, selectedId, onSelect }: ResultPane
         id: result?.id || 'unknown',
         title: typeof result?.title === 'string' ? result.title : 'Untitled',
         author: typeof result?.author === 'string' ? result.author : '',
-        collection: typeof result?.collection === 'string' ? result.collection : null,
-        path: typeof result?.path === 'string' ? result.path : null
+        content_url: null,
+        lab_id: null,
+        lab_name: null,
+        published: null,
+        collection: typeof result?.collection === 'string' ? result.collection as 'media' : 'media',
+        score: 0
       };
     }
   }, [result]);
 
-  const recordId = safeResult?.id || safeResult?.record?.id || safeResult?.record?.metadata?.id || safeResult?.metadata?.id || null;
+  const recordId = safeResult?.id || safeResult?.metadata?.id || null;
   const isSelected = recordId === selectedId;
 
   /*
@@ -44,19 +35,12 @@ export default function ResultPanel({ result, selectedId, onSelect }: ResultPane
     result.record.metadata.title, result.data.title, result.fields.title.stringValue,
     or result.doc.data().title. Falls back to recordId or 'Untitled'.
   */
-  function resolveTitle(r: any) {
+  function resolveTitle(r: SearchResult): string {
     if (!r) return 'Untitled';
     return (
       r.title ||
       r.metadata?.title ||
-      r.record?.metadata?.title ||
-      r.data?.title ||
-      // Firestore REST / structured fields
-      r.fields?.title?.stringValue ||
-      r.fields?.title?.value ||
-      // some libraries wrap document under `doc` or `record`
-      r.doc?.data?.title ||
-      (typeof r.data === 'function' ? r.data().title : undefined) ||
+      r.fields?.title ||
       recordId ||
       'Untitled'
     );
@@ -74,24 +58,7 @@ export default function ResultPanel({ result, selectedId, onSelect }: ResultPane
   
   // Get published date
   const publishedRaw = safeResult?.published || safeResult?.metadata?.published || safeResult?.fields?.published || null;
-  
-  // Format published date as "Month Name Day, Year"
-  const formatPublishedDate = (dateStr: string | null): string | null => {
-    if (!dateStr) return null;
-    try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return null;
-      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                          'July', 'August', 'September', 'October', 'November', 'December'];
-      const month = monthNames[date.getMonth()];
-      const day = date.getDate();
-      const year = date.getFullYear();
-      return `${month} ${day}, ${year}`;
-    } catch {
-      return null;
-    }
-  };
-  const published = formatPublishedDate(publishedRaw);
+  const published = formatDate(publishedRaw);
 
   const hasPreview = !!contentUrl;
 
