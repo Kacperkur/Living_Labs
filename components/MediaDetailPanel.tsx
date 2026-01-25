@@ -270,7 +270,7 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
             )}
 
             {/* Visit Lab Button */}
-            <Link href="/living-lab" style={{ textDecoration: 'none' }}>
+            <Link href={`/living-lab?id=${encodeURIComponent(selectedMedia?.lab_id || selectedMedia?.metadata?.lab_id || '')}`} style={{ textDecoration: 'none' }}>
               <button
                 style={{
                   display: 'inline-block',
