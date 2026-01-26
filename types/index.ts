@@ -58,7 +58,7 @@ export interface SearchResult extends Media {
   previewUrl?: string | null; // For UI display
   
   // Legacy fields for backwards compatibility
-  metadata?: Partial<Media>;
+  metadata?: Partial<Media> & Partial<Lab>; // Support both Media and Lab metadata
   fields?: Partial<Media>;
 }
 
