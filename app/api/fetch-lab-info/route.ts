@@ -80,28 +80,31 @@ export async function GET(req: Request) {
       
       // Use a general search query to get all labs instead of dummy vectors
       const queryResponse = await labsIndex.searchRecords({
-        query: {
-          topK: 1000, // Adjust as needed to get all results
-          inputs: { text: "lab research project" } // Generic query to match most labs
-        }
-      });
+  query: {
+    topK: 1000,
+    inputs: { text: "lab research project" }
+  }
+});
 
-      if (!queryResponse || !queryResponse.records || queryResponse.records.length === 0) {
-        return NextResponse.json({ error: "No labs found" }, { status: 404 });
-      }
+const hits = queryResponse.result?.hits ?? [];
 
-      const allLabs = queryResponse.records.map(record => {
-        const metadata = (record.metadata || {}) as PineconeMetadata;
-        return {
-          id: record.id,
-          name: typeof metadata.name === 'string' ? metadata.name : null,
-          location: typeof metadata.location === 'string' ? metadata.location : null,
-          start_date: typeof metadata.start_date === 'string' ? metadata.start_date : null,
-          end_date: typeof metadata.end_date === 'string' ? metadata.end_date : null,
-          biography: typeof metadata.biography === 'string' ? metadata.biography : null,
-          SDGs: Array.isArray(metadata.SDGs) ? metadata.SDGs : []
-        };
-      });
+if (hits.length === 0) {
+  return NextResponse.json({ error: "No labs found" }, { status: 404 });
+}
+
+const allLabs = hits.map(hit => {
+  const metadata = (hit.fields || {}) as PineconeMetadata;
+
+  return {
+    id: hit._id,
+    name: typeof metadata.name === 'string' ? metadata.name : null,
+    location: typeof metadata.location === 'string' ? metadata.location : null,
+    start_date: typeof metadata.start_date === 'string' ? metadata.start_date : null,
+    end_date: typeof metadata.end_date === 'string' ? metadata.end_date : null,
+    biography: typeof metadata.biography === 'string' ? metadata.biography : null,
+    SDGs: Array.isArray(metadata.SDGs) ? metadata.SDGs : []
+  };
+});
 
       console.log(`✅ All lab info fetched successfully:`, allLabs.length, "labs found.");
       return NextResponse.json(allLabs);
