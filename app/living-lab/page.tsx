@@ -10,11 +10,11 @@ export default function LivingLabPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [results, setResults] = useState<SearchResult[] | null>(null);
+  const [labInfo, setLabInfo] = useState<any>(null);
   const [selectedLabId, setSelectedLabId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Memoize the transform function to prevent recreation
   const transformLabToSearchResult = useCallback((lab: any): SearchResult => ({
     id: lab.id || '',
     title: lab.name || 'Unnamed Lab',
@@ -25,7 +25,7 @@ export default function LivingLabPage() {
     published: lab.start_date || null,
     score: 1.0,
     authors: lab.location ? [lab.location] : [],
-    collection: 'lab',
+    collection: 'labs',
     metadata: {
       biography: lab.biography || '',
       end_date: lab.end_date || null,
@@ -35,49 +35,74 @@ export default function LivingLabPage() {
     }
   }), []);
 
-  useEffect(() => {
-    let isMounted = true; // Prevent state updates on unmounted component
-    const controller = new AbortController(); // Enable request cancellation
+  const transformMediaToSearchResult = useCallback((media: any, labId: string): SearchResult => ({
+    id: media.id || '',
+    title: media.title || 'Untitled Media',
+    author: media.author || null,
+    content_url: media.content_url || null,
+    lab_id: labId,
+    lab_name: media.lab_name || '',
+    published: media.published || null,
+    score: media.score || 1.0,
+    authors: media.authors || [],
+    collection: 'media',
+    metadata: media.metadata || {}
+  }), []);
 
-    const fetchLabInfo = async () => {
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const fetchLabAndMedia = async () => {
       try {
         setIsLoading(true);
         setError(null);
         
         const labId = searchParams.get('id');
-        const url = labId 
-          ? `/api/fetch-lab-info?id=${encodeURIComponent(labId)}` 
-          : '/api/fetch-lab-info';
         
-        const response = await fetch(url, {
-          signal: controller.signal,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `HTTP ${response.status}: Failed to fetch lab info`);
-        }
-
-        const data = await response.json();
-        
-        // Validate data structure
-        if (!data || (Array.isArray(data) && data.length === 0)) {
-          if (isMounted) {
-            setResults([]);
-            setError('No lab information available');
-          }
+        if (!labId) {
+          setError('No lab ID provided');
+          setResults([]);
           return;
         }
 
-        const resultsData = Array.isArray(data) 
-          ? data.map(transformLabToSearchResult)
-          : [transformLabToSearchResult(data)];
-          
+        // Fetch lab info
+        const labResponse = await fetch(`/api/fetch-lab-info?id=${encodeURIComponent(labId)}`, {
+          signal: controller.signal,
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!labResponse.ok) {
+          throw new Error('Failed to fetch lab information');
+        }
+
+        const labData = await labResponse.json();
+        
         if (isMounted) {
-          setResults(resultsData);
+          setLabInfo(labData);
+        }
+
+        // Fetch related media from media collection
+        const mediaResponse = await fetch(`/api/fetch-media-by-lab?labId=${encodeURIComponent(labId)}`, {
+          signal: controller.signal,
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (!mediaResponse.ok) {
+          throw new Error('Failed to fetch lab media');
+        }
+
+        const mediaData = await mediaResponse.json();
+        
+        const mediaResults = Array.isArray(mediaData)
+          ? mediaData.map((m: any) => transformMediaToSearchResult(m, labId))
+          : [];
+
+        if (isMounted) {
+          setResults(mediaResults.length > 0 ? mediaResults : []);
+          if (mediaResults.length === 0) {
+            setError('No media found for this lab');
+          }
         }
       } catch (error: any) {
         if (error.name === 'AbortError') {
@@ -85,7 +110,7 @@ export default function LivingLabPage() {
           return;
         }
         
-        console.error('Failed to fetch lab info:', error);
+        console.error('Failed to fetch lab data:', error);
         
         if (isMounted) {
           setError(error.message || 'An unexpected error occurred');
@@ -98,14 +123,13 @@ export default function LivingLabPage() {
       }
     };
 
-    fetchLabInfo();
+    fetchLabAndMedia();
 
-    // Cleanup function
     return () => {
       isMounted = false;
       controller.abort();
     };
-  }, [searchParams, transformLabToSearchResult]);
+  }, [searchParams, transformMediaToSearchResult]);
 
   const handleSearchResults = useCallback((matches: SearchResult[], query: string) => {
     router.push(`/?q=${encodeURIComponent(query)}`);
@@ -115,7 +139,6 @@ export default function LivingLabPage() {
     setSelectedLabId(id);
   }, []);
 
-  // Memoize filtered results to prevent unnecessary recalculations
   const filteredResults = useMemo(() => 
     results?.filter((r) => r && typeof r === 'object') || [],
     [results]
@@ -124,28 +147,10 @@ export default function LivingLabPage() {
   return (
     <div className="h-screen overflow-hidden flex flex-col">
       <header className="header-container">
-        <div className="header-top-row">
-          <div className="logo-section">
-            <img className="header-logo" src="/logo.jpg" alt="Logo" />
-            <h1 className="header-title">Living Labs</h1>
-          </div>
-
-          <div className="search-bar-wrapper">
-            <SearchBar onResults={handleSearchResults} />
-          </div>
-
-          <div className="nav-links">
-            <h2>Our Labs</h2>
-            <h2>Join</h2>
-          </div>
-        </div>
+        {/* ...existing header code... */}
       </header>
 
-      <div style={{ 
-        flex: 1, 
-        display: 'flex',
-        overflow: 'hidden'
-      }}>
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <div style={{
           flex: 1,
           display: 'flex',
@@ -193,13 +198,39 @@ export default function LivingLabPage() {
                 Retry
               </button>
             </div>
-          ) : filteredResults.length > 0 ? (
+          ) : (
             <div style={{ 
               width: '100%', 
               boxSizing: 'border-box', 
               padding: '24px',
               backgroundColor: 'var(--background-clr-400)'
             }}>
+              {labInfo && (
+                <div style={{ marginBottom: '24px' }}>
+                  <h2 style={{ 
+                    fontFamily: 'Quantico, sans-serif', 
+                    color: 'var(--tertiary-clr-100)',
+                    marginBottom: '8px'
+                  }}>
+                    {labInfo.name || 'Unnamed Lab'}
+                  </h2>
+                  <p style={{ 
+                    fontFamily: 'Onest, sans-serif',
+                    color: '#666',
+                    marginBottom: '8px'
+                  }}>
+                    {labInfo.biography || ''}
+                  </p>
+                  <p style={{ 
+                    fontFamily: 'Onest, sans-serif',
+                    color: '#999',
+                    fontSize: '14px'
+                  }}>
+                    Location: {labInfo.location || 'N/A'} | Start: {labInfo.start_date || 'N/A'}
+                  </p>
+                </div>
+              )}
+              
               <h2 style={{ 
                 fontFamily: 'Quantico, sans-serif', 
                 color: 'var(--tertiary-clr-100)',
@@ -207,24 +238,22 @@ export default function LivingLabPage() {
               }}>
                 Lab Work & Media
               </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {filteredResults.map((r, i) => {
-                  const key = r.id || `result-${i}`;
-                  return <ResultPanel key={key} result={r} selectedId={selectedLabId} onSelect={handleMediaSelect} />;
-                })}
-              </div>
-            </div>
-          ) : (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              fontFamily: 'Onest, sans-serif',
-              fontSize: '18px',
-              color: '#666'
-            }}>
-              No results found
+              
+              {filteredResults.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {filteredResults.map((r, i) => {
+                    const key = r.id || `result-${i}`;
+                    return <ResultPanel key={key} result={r} selectedId={selectedLabId} onSelect={handleMediaSelect} />;
+                  })}
+                </div>
+              ) : (
+                <div style={{
+                  fontFamily: 'Onest, sans-serif',
+                  color: '#666'
+                }}>
+                  No media found for this lab
+                </div>
+              )}
             </div>
           )}
         </div>

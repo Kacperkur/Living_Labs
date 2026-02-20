@@ -45,15 +45,47 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
 
   return (
     <div style={{
-      width: '100%',
-      height: '100%',
+      flex: '0 0 33.33%',
       display: 'flex',
       flexDirection: 'column',
       borderLeft: '2px solid #e0e0e0',
       backgroundColor: 'var(--background-clr-400)',
-      overflowY: 'auto',
+      overflow: 'hidden',
       position: 'relative'
     }}>
+      {/* Location Image - 1/4 height */}
+      {labInfo?.location && (
+        <div style={{
+          width: '100%',
+          height: '25%',
+          overflow: 'hidden',
+          backgroundColor: 'var(--background-clr-400)',
+          position: 'relative'
+        }}>
+          <img
+            src={`/${labInfo.location}.jpg`}
+            alt={labInfo.location}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block'
+            }}
+            onError={(e) => {
+              // If image fails to load, try .png extension
+              const target = e.target as HTMLImageElement;
+              if (target.src.includes('.jpg')) {
+                target.src = `/${labInfo.location}.png`;
+              } else {
+                // If still fails, hide the image container
+                const container = target.parentElement;
+                if (container) container.style.display = 'none';
+              }
+            }}
+          />
+        </div>
+      )}
+
       {/* Close button */}
       <button
         onClick={onClose}
@@ -89,49 +121,18 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
         ×
       </button>
 
-      {/* Lab Information & Image */}
+      {/* Lab Information */}
       <div style={{
         flex: 1,
         overflowY: 'auto',
-        paddingBottom: 24,
+        padding: 24,
+        paddingTop: labInfo?.location ? 24 : 64,
         display: 'flex',
         flexDirection: 'column',
+        justifyContent: 'center',
         alignItems: 'center',
         textAlign: 'center'
       }}>
-        {/* Location Image */}
-        {labInfo?.location && (
-          <div style={{
-            width: '100%',
-            backgroundColor: 'var(--background-clr-400)',
-            position: 'relative',
-            borderRadius: 8
-          }}>
-            <img
-              src={`/lab_images/${labInfo.location}.jpg`}
-              alt={labInfo.location}
-              style={{
-                width: '100%',
-                height: 'auto',
-                paddingBottom: 16,
-                objectFit: 'contain',
-                display: 'block'
-              }}
-              onError={(e) => {
-                // If image fails to load, try .png extension
-                const target = e.target as HTMLImageElement;
-                if (target.src.includes('.jpg')) {
-                  target.src = `/lab_images/${labInfo.location}.png`;
-                } else {
-                  // If still fails, hide the image container
-                  const container = target.parentElement;
-                  if (container) container.style.display = 'none';
-                }
-              }}
-            />
-          </div>
-        )}
-
         {loading ? (
           <div style={{
             fontFamily: 'Onest, sans-serif',

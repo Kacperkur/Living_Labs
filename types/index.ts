@@ -24,7 +24,7 @@ export interface Media {
   lab_id: string | null;
   lab_name: string | null;
   published: Date | Timestamp | string | null;
-  collection?: 'media'; // Collection name for routing
+  collection?: 'media' | 'labs'; // Accept both collection types
   score?: number; // Relevance score from search
 }
 
@@ -56,6 +56,7 @@ export interface SearchResult extends Media {
   score: number; // Relevance score (required for search results)
   pineconeMetadata?: PineconeMetadata; // Original metadata from vector search
   previewUrl?: string | null; // For UI display
+  collection?: 'media' | 'labs'; // Specify which collection the result came from
   
   // Legacy fields for backwards compatibility
   metadata?: Partial<Media> & Partial<Lab>; // Support both Media and Lab metadata

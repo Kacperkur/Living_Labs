@@ -70,17 +70,15 @@ export default function Home() {
         flex: '1 1 0',
         minHeight: 0,
         display: 'flex',
-        overflow: 'hidden',
-        position: 'relative'
+        overflow: 'hidden'
       }}>
         {/* Left side: Map and Results */}
         <div style={{
-          width: selectedMedia ? '66.67%' : '100%',
-          height: '100%',
+          flex: selectedMedia ? '0 0 66.67%' : '1',
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
-          transition: 'width 0.3s ease'
+          transition: 'flex 0.3s ease'
         }}>
           {/* Map - takes remaining space or full space when no results */}
           <div className="map-container">
@@ -114,21 +112,12 @@ export default function Home() {
         </div>
 
         {/* Right side: 2-Column Media Detail Panel */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          width: '33.33%',
-          height: '100%',
-          transform: selectedMedia ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 0.3s ease',
-          zIndex: 10
-        }}>
+        {selectedMedia && (
           <MediaDetailPanel 
             selectedMedia={selectedMedia}
             onClose={() => handleMediaSelect(null)}
           />
-        </div>
+        )}
       </div>
     </div>
   );
