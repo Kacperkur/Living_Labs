@@ -22,7 +22,8 @@ export default function LivingLabPage() {
     content_url: null,
     lab_id: lab.id || '',
     lab_name: lab.name || 'Unnamed Lab',
-    published: lab.start_date || null,
+    start_date: lab.start_date || null,
+    end_date: lab.end_date || null,
     score: 1.0,
     authors: lab.location ? [lab.location] : [],
     collection: 'lab',
@@ -200,18 +201,108 @@ export default function LivingLabPage() {
               padding: '24px',
               backgroundColor: 'var(--background-clr-400)'
             }}>
-              <h2 style={{ 
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+               {filteredResults.map((r, i) => {
+  const key = r.id || `result-${i}`;
+  const location = r.metadata?.location;
+  const labPhoto = `/lab_images/${location}.jpg`;
+  const labName = r.lab_name;
+  
+  const description = r.metadata?.biography;
+
+   
+  return (
+    <div
+      key={key}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: "#fff",
+        borderRadius: "8px",
+        padding: "20px",
+        gap: "16px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+      }}
+    >
+      {/* Top Horizontal Section */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "top",
+          gap: "20px"
+        }}
+      >
+        {/* Lab Photo */}
+        <img
+          src={labPhoto}
+          style={{
+            width: '50%',
+            height: 'auto',
+            objectFit: "cover",
+            borderRadius: "8px"
+          }}
+        />
+
+        {/* Name + Location (Vertical Stack) */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "6px"
+          }}
+        >
+          <h3
+            style={{
+              fontFamily: "Quantico, sans-serif",
+              fontSize: "22px",
+              margin: 0,
+              color: "var(--tertiary-clr-100)"
+            }}
+          >
+            {labName}
+          </h3>
+
+          <p
+            style={{
+              margin: 0,
+              fontSize: "16px",
+              color: "#666",
+              fontFamily: "Onest, sans-serif"
+            }}
+          > 
+            {location}
+            
+            
+          </p>
+        </div>
+      </div>
+
+      {/* Description Below */}
+      <h1 className="header-title">Mission</h1>
+      <div
+        style={{
+          fontFamily: "Onest, sans-serif",
+          fontSize: "15px",
+          lineHeight: "1.6",
+          color: "#444"
+        }}
+      >
+        {description}
+      </div>
+      <h2 style={{ 
                 fontFamily: 'Quantico, sans-serif', 
                 color: 'var(--tertiary-clr-100)',
                 marginBottom: '16px'
               }}>
                 Lab Work & Media
               </h2>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {filteredResults.map((r, i) => {
-                  const key = r.id || `result-${i}`;
-                  return <ResultPanel key={key} result={r} selectedId={selectedLabId} onSelect={handleMediaSelect} />;
-                })}
+    </div>
+  );
+})}
+
+
               </div>
             </div>
           ) : (
