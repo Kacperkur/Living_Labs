@@ -20,6 +20,7 @@ export default function Home() {
   const [selectedLabId, setSelectedLabId] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<SearchResult | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
+  const [cameraTargetBuilding, setCameraTargetBuilding] = useState<string | null>(null);
 
   // Handle search from URL query parameter
   useEffect(() => {
@@ -30,24 +31,37 @@ export default function Home() {
   }, [searchParams]);
 
   // Handle media selection
-  const handleMediaSelect = (id: string | null) => {
+  const handleMediaSelect = async (id: string | null) => {
     setSelectedLabId(id);
     if (id && results) {
       const media = results.find(r => r.id === id);
       setSelectedMedia(media || null);
+      setSelectedBuilding(null);
+
+      // Center camera on the lab's building
+      const labId = media?.lab_id;
+      if (labId) {
+        try {
+          const res = await fetch(`/api/lab-location?id=${encodeURIComponent(labId)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.building) setCameraTargetBuilding(data.building);
+          }
+        } catch {
+          // non-fatal — camera just won't move
+        }
+      }
     } else {
       setSelectedMedia(null);
     }
-    // Clear building panel when media is selected
-    if (id) setSelectedBuilding(null);
   };
 
   // Handle building click from 3D map
   const handleBuildingClick = (name: string) => {
     setSelectedBuilding(prev => prev === name ? null : name);
-    // Clear media panel when a building is selected
     setSelectedMedia(null);
     setSelectedLabId(null);
+    setCameraTargetBuilding(name);
   };
 
   return (
@@ -96,7 +110,7 @@ export default function Home() {
         }}>
           {/* Map - takes remaining space or full space when no results */}
           <div className="map-container">
-            <Scene onBuildingClick={handleBuildingClick} />
+            <Scene onBuildingClick={handleBuildingClick} cameraTargetBuilding={cameraTargetBuilding} />
           </div>
 
           {/* Results at bottom - shows all or just selected one */}

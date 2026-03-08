@@ -1,32 +1,62 @@
 "use client";
 
-import {Canvas} from '@react-three/fiber';
-// import Model from './Model'; // original Model import (commented out per request)
-// Use the user's transformed GLTF React component from public
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Model as MyURIModel } from '../public/MyURImodel3';
-import React, { Suspense, useRef } from 'react'; 
+import React, { Suspense, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Bounds, Center, Html, useProgress, OrbitControls, OrthographicCamera } from '@react-three/drei';
 
-
 function Loader() {
-    const { progress, active } = useProgress();
-
+    const { progress } = useProgress();
     return <Html center>{progress.toFixed(1)}%</Html>;
+}
+
+// Smoothly animates the OrbitControls target (and camera) toward a building's
+// actual world position, looked up directly from the scene graph.
+function CameraAnimator({
+    targetBuilding,
+    controlsRef,
+}: {
+    targetBuilding: string | null;
+    controlsRef: React.MutableRefObject<any>;
+}) {
+    const { scene } = useThree();
+    const destination = useRef<THREE.Vector3 | null>(null);
+
+    useEffect(() => {
+        if (!targetBuilding) { destination.current = null; return; }
+        const obj = scene.getObjectByName(targetBuilding);
+        if (obj) {
+            const worldPos = new THREE.Vector3();
+            obj.getWorldPosition(worldPos);
+            worldPos.y = 0;
+            destination.current = worldPos;
+        }
+    }, [targetBuilding, scene]);
+
+    useFrame(() => {
+        if (!destination.current || !controlsRef.current) return;
+        const controls = controlsRef.current;
+        const dist = controls.target.distanceTo(destination.current);
+        if (dist < 1) { destination.current = null; return; }
+        const step = destination.current.clone().sub(controls.target).multiplyScalar(0.08);
+        controls.target.add(step);
+        controls.object.position.add(step);
+        controls.update();
+    });
+
+    return null;
 }
 
 interface SceneProps {
     onBuildingClick?: (name: string) => void;
+    cameraTargetBuilding?: string | null;
 }
 
-export function Scene({ onBuildingClick }: SceneProps = {}){
-    // ref to OrbitControls so we can access the camera and control object
+export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}) {
     const controlsRef = useRef<any>(null);
-
-    // simple pan state to track dragging
     const panState = useRef({ dragging: false, lastX: 0, lastY: 0, startX: 0, startY: 0, moved: false });
 
-    // Only fire building click if the pointer didn't move (i.e. wasn't a pan)
     function handleBuildingClick(name: string) {
         if (!panState.current.moved) {
             onBuildingClick?.(name);
@@ -60,22 +90,19 @@ export function Scene({ onBuildingClick }: SceneProps = {}){
         if (!controls) return;
         const cam = controls.object as THREE.Camera;
 
-        // compute forward (camera look) projected onto XZ plane
         const forward = new THREE.Vector3();
         cam.getWorldDirection(forward);
         forward.y = 0;
         forward.normalize();
 
-        // right vector = forward x up
         const right = new THREE.Vector3();
         right.crossVectors(forward, cam.up).normalize();
 
-        // sensitivity factor: tune as needed; scale with orthographic zoom if present
         const zoom = (cam as any).zoom || 1;
         const factor = 0.5 * (1 / zoom);
 
         const movement = new THREE.Vector3();
-        movement.addScaledVector(right, -dx2 * factor * 0.3); // Reduced horizontal panning by 70%
+        movement.addScaledVector(right, -dx2 * factor * 0.3);
         movement.addScaledVector(forward, dy2 * factor);
 
         cam.position.add(movement);
@@ -104,35 +131,33 @@ export function Scene({ onBuildingClick }: SceneProps = {}){
     }
 
     return (
-    <div
-        style={{ 
-            width: '100%', 
-            height: '100%', 
-            position: 'relative',
-            border: '2px ridge rgba(0, 0, 0, 0.2)',
-            boxSizing: 'border-box',
-            boxShadow: 'inset 0 8px 12px -8px rgba(0, 0, 0, 0.3)'
-        }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onWheel={onWheel}
-    >
+        <div
+            style={{
+                width: '100%',
+                height: '100%',
+                position: 'relative',
+                border: '2px ridge rgba(0, 0, 0, 0.2)',
+                boxSizing: 'border-box',
+                boxShadow: 'inset 0 8px 12px -8px rgba(0, 0, 0, 0.3)'
+            }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onWheel={onWheel}
+        >
             <Canvas
-                shadows // enable shadowMap on the renderer
+                shadows
                 dpr={[1, 2]}
                 style={{ width: '100%', height: '100%' }}
             >
-                {}
                 <OrthographicCamera
                     makeDefault
-                    position={[10,300,-400]}
+                    position={[10, 300, -400]}
                     rotation={[-Math.PI / 6, Math.PI / 4, 0]}
                     zoom={1}
                     near={0.1}
                     far={10000}
                 />
-                {/* Directional light configured to cast shadows */}
                 <directionalLight
                     position={[100, 200, 100]}
                     intensity={1.2}
@@ -148,27 +173,29 @@ export function Scene({ onBuildingClick }: SceneProps = {}){
                     shadow-bias={-0.0005}
                 />
                 <ambientLight intensity={0.6} />
-                
+
                 <Suspense fallback={<Loader />}>
-    
                     <Bounds fit={false} margin={2}>
                         <Center>
-                            {/* Previously: <Model /> (from ./Model) */}
                             <MyURIModel onBuildingClick={handleBuildingClick} />
                         </Center>
                     </Bounds>
-                    
                 </Suspense>
 
                 <OrbitControls
                     ref={controlsRef}
                     makeDefault
                     enableRotate={false}
-                    enablePan={false} // we intercept panning
+                    enablePan={false}
                     enableZoom={true}
                     minZoom={0.5}
                     maxZoom={3}
                     screenSpacePanning={false}
+                />
+
+                <CameraAnimator
+                    targetBuilding={cameraTargetBuilding ?? null}
+                    controlsRef={controlsRef}
                 />
             </Canvas>
         </div>
