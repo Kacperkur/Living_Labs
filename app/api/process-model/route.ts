@@ -6,7 +6,7 @@ import path from 'path';
 import fs from 'fs';
 
 // Since we're on the server, we can use fs to read the file
-const modelPath = path.resolve('./public/myURImodel2.glb');
+const modelPath = path.resolve('./public/myURImodel3.glb');
 
 // This function will be executed when the API route is called
 export async function GET() {

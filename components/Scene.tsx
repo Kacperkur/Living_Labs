@@ -3,7 +3,7 @@
 import {Canvas} from '@react-three/fiber';
 // import Model from './Model'; // original Model import (commented out per request)
 // Use the user's transformed GLTF React component from public
-import { Model as MyURIModel } from '../public/MyURImodel2';
+import { Model as MyURIModel } from '../public/MyURImodel3';
 import React, { Suspense, useRef } from 'react'; 
 import * as THREE from 'three';
 import { Bounds, Center, Html, useProgress, OrbitControls, OrthographicCamera } from '@react-three/drei';
@@ -15,17 +15,31 @@ function Loader() {
     return <Html center>{progress.toFixed(1)}%</Html>;
 }
 
-export function Scene(){
+interface SceneProps {
+    onBuildingClick?: (name: string) => void;
+}
+
+export function Scene({ onBuildingClick }: SceneProps = {}){
     // ref to OrbitControls so we can access the camera and control object
     const controlsRef = useRef<any>(null);
 
     // simple pan state to track dragging
-    const panState = useRef({ dragging: false, lastX: 0, lastY: 0 });
+    const panState = useRef({ dragging: false, lastX: 0, lastY: 0, startX: 0, startY: 0, moved: false });
+
+    // Only fire building click if the pointer didn't move (i.e. wasn't a pan)
+    function handleBuildingClick(name: string) {
+        if (!panState.current.moved) {
+            onBuildingClick?.(name);
+        }
+    }
 
     function onPointerDown(e: React.PointerEvent) {
         panState.current.dragging = true;
+        panState.current.moved = false;
         panState.current.lastX = e.clientX;
         panState.current.lastY = e.clientY;
+        panState.current.startX = e.clientX;
+        panState.current.startY = e.clientY;
         try { (e.target as Element).setPointerCapture(e.pointerId); } catch {}
     }
     function onPointerUp(e: React.PointerEvent) {
@@ -34,8 +48,11 @@ export function Scene(){
     }
     function onPointerMove(e: React.PointerEvent) {
         if (!panState.current.dragging) return;
-        const dx = e.clientX - panState.current.lastX;
-        const dy = e.clientY - panState.current.lastY;
+        const dx = e.clientX - panState.current.startX;
+        const dy = e.clientY - panState.current.startY;
+        if (Math.sqrt(dx * dx + dy * dy) > 5) panState.current.moved = true;
+        const dx2 = e.clientX - panState.current.lastX;
+        const dy2 = e.clientY - panState.current.lastY;
         panState.current.lastX = e.clientX;
         panState.current.lastY = e.clientY;
 
@@ -58,8 +75,8 @@ export function Scene(){
         const factor = 0.5 * (1 / zoom);
 
         const movement = new THREE.Vector3();
-        movement.addScaledVector(right, -dx * factor * 0.3); // Reduced horizontal panning by 70%
-        movement.addScaledVector(forward, dy * factor);
+        movement.addScaledVector(right, -dx2 * factor * 0.3); // Reduced horizontal panning by 70%
+        movement.addScaledVector(forward, dy2 * factor);
 
         cam.position.add(movement);
         controls.target.add(movement);
@@ -137,7 +154,7 @@ export function Scene(){
                     <Bounds fit={false} margin={2}>
                         <Center>
                             {/* Previously: <Model /> (from ./Model) */}
-                            <MyURIModel />
+                            <MyURIModel onBuildingClick={handleBuildingClick} />
                         </Center>
                     </Bounds>
                     

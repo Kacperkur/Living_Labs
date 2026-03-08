@@ -4,10 +4,11 @@
 
 import Preload from '@/components/Preload';
 import Head from 'next/head';
-import { Scene } from '@/components/Scene'; 
+import { Scene } from '@/components/Scene';
 import SearchBar from '@/components/SearchBar';
 import ResultPanel from '@/components/ResultPanel';
 import MediaDetailPanel from '@/components/MediaDetailPanel';
+import BuildingPanel from '@/components/BuildingPanel';
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SearchResult, SearchBarHandle } from '@/types';
@@ -18,6 +19,7 @@ export default function Home() {
   const [results, setResults] = useState<SearchResult[] | null>(null);
   const [selectedLabId, setSelectedLabId] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<SearchResult | null>(null);
+  const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
 
   // Handle search from URL query parameter
   useEffect(() => {
@@ -36,6 +38,16 @@ export default function Home() {
     } else {
       setSelectedMedia(null);
     }
+    // Clear building panel when media is selected
+    if (id) setSelectedBuilding(null);
+  };
+
+  // Handle building click from 3D map
+  const handleBuildingClick = (name: string) => {
+    setSelectedBuilding(prev => prev === name ? null : name);
+    // Clear media panel when a building is selected
+    setSelectedMedia(null);
+    setSelectedLabId(null);
   };
 
   return (
@@ -66,7 +78,7 @@ export default function Home() {
       </header>
 
       {/* Content area - vertical layout with sticky map */}
-      <div style={{ 
+      <div style={{
         flex: '1 1 0',
         minHeight: 0,
         display: 'flex',
@@ -75,7 +87,7 @@ export default function Home() {
       }}>
         {/* Left side: Map and Results */}
         <div style={{
-          width: selectedMedia ? '66.67%' : '100%',
+          width: (selectedMedia || selectedBuilding) ? '66.67%' : '100%',
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -84,7 +96,7 @@ export default function Home() {
         }}>
           {/* Map - takes remaining space or full space when no results */}
           <div className="map-container">
-            <Scene />
+            <Scene onBuildingClick={handleBuildingClick} />
           </div>
 
           {/* Results at bottom - shows all or just selected one */}
@@ -113,7 +125,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Right side: 2-Column Media Detail Panel */}
+        {/* Right side: Media Detail Panel */}
         <div style={{
           position: 'absolute',
           top: 0,
@@ -124,9 +136,26 @@ export default function Home() {
           transition: 'transform 0.3s ease',
           zIndex: 10
         }}>
-          <MediaDetailPanel 
+          <MediaDetailPanel
             selectedMedia={selectedMedia}
             onClose={() => handleMediaSelect(null)}
+          />
+        </div>
+
+        {/* Right side: Building Panel */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '33.33%',
+          height: '100%',
+          transform: selectedBuilding ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.3s ease',
+          zIndex: 10
+        }}>
+          <BuildingPanel
+            buildingName={selectedBuilding}
+            onClose={() => setSelectedBuilding(null)}
           />
         </div>
       </div>
