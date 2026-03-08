@@ -3,46 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SearchBar from "@/components/SearchBar";
+import ResultPanel from "@/components/ResultPanel";
+import MemberBlock from "@/components/MemberBlock";
 import { SearchResult } from "@/types";
 
-function BookmarkButton({ active, onClick }: { active: boolean; onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-label={active ? "Remove bookmark" : "Bookmark"}
-      style={{
-        width: 33,
-        height: 36,
-        borderRadius: "50%",
-        backgroundColor: active ? "#002147" : "#e0e0e0",
-        border: "none",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-        transition: "background-color 0.2s",
-      }}
-    >
-      <svg
-        width="14"
-        height="16"
-        viewBox="0 0 14 16"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        {/* + icon */}
-        <line x1="7" y1="3" x2="7" y2="9" stroke={active ? "#fff" : "#002147"} strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="4" y1="6" x2="10" y2="6" stroke={active ? "#fff" : "#002147"} strokeWidth="1.5" strokeLinecap="round" />
-        {/* bookmark bottom chevron lines */}
-        <line x1="3" y1="4" x2="5" y2="2.5" stroke={active ? "#fff" : "#002147"} strokeWidth="1" strokeLinecap="round" />
-        <line x1="3" y1="6" x2="5" y2="7.5" stroke={active ? "#fff" : "#002147"} strokeWidth="1" strokeLinecap="round" />
-        <line x1="11" y1="4" x2="9" y2="2.5" stroke={active ? "#fff" : "#002147"} strokeWidth="1" strokeLinecap="round" />
-        <line x1="11" y1="6" x2="9" y2="7.5" stroke={active ? "#fff" : "#002147"} strokeWidth="1" strokeLinecap="round" />
-      </svg>
-    </button>
-  );
-}
 
 export default function LivingLabPage() {
   const router = useRouter();
@@ -51,7 +15,9 @@ export default function LivingLabPage() {
   const [lab, setLab] = useState<SearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
+  const [media, setMedia] = useState<SearchResult[]>([]);
+  const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
+  const [members, setMembers] = useState<{ name: string; profile_picture_url: string | null }[]>([]);
 
   const transformLabToSearchResult = useCallback((lab: any): SearchResult => ({
     id: lab.id || "",
@@ -104,6 +70,20 @@ export default function LivingLabPage() {
 
         const transformed = transformLabToSearchResult(data);
         if (isMounted) setLab(transformed);
+
+        // Fetch media for this lab
+        const mediaRes = await fetch(`/api/media-by-lab?id=${encodeURIComponent(labId)}`, { signal: controller.signal });
+        if (mediaRes.ok) {
+          const mediaData = await mediaRes.json();
+          if (isMounted) setMedia(mediaData.media ?? []);
+        }
+
+        // Fetch members for this lab
+        const membersRes = await fetch(`/api/lab-members?id=${encodeURIComponent(labId)}`, { signal: controller.signal });
+        if (membersRes.ok) {
+          const membersData = await membersRes.json();
+          if (isMounted) setMembers(membersData.members ?? []);
+        }
       } catch (err: any) {
         if (err.name !== "AbortError") {
           console.error("Fetch failed:", err);
@@ -122,31 +102,7 @@ export default function LivingLabPage() {
     router.push(`/?q=${encodeURIComponent(query)}`);
   }, [router]);
 
-  const toggleBookmark = (id: string) =>
-    setBookmarks(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-
   const sdgs: any[] = lab?.metadata?.SDGs ?? [];
-
-  const publications = lab
-    ? [
-        {
-          id: "pub-1",
-          title: "Monitoring Impacts of the Gulf Stream and its Rings on the Physics, Chemistry, and Biology of the Middle Atlantic Bight Shelf and Slope from CMV Oleander",
-          authors: "Andres, M., Rossby, T., Firing, E., Flagg, C., Bates, N.R., Hummon, J.M., Pierrot, D., Noyes, T.J., Enright, M.P., O'Brien, J.K., Hudak, J., Dong, S., Melrose, D.C., Johns, D.G., Gregory, L.",
-          publishedDate: "January 6, 2025",
-        },
-        {
-          id: "pub-2",
-          title: "Monitoring Impacts of the Gulf Stream and its Rings on the Physics, Chemistry, and Biology of the Middle Atlantic Bight Shelf and Slope from CMV Oleander",
-          authors: "Andres, M., Rossby, T., Firing, E., Flagg, C., Bates, N.R., Hummon, J.M., Pierrot, D., Noyes, T.J., Enright, M.P., O'Brien, J.K., Hudak, J., Dong, S., Melrose, D.C., Johns, D.G., Gregory, L.",
-          publishedDate: "January 6, 2025",
-        },
-      ]
-    : [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
@@ -211,6 +167,46 @@ export default function LivingLabPage() {
                       : " – Present"}
                   </p>
                 )}
+
+                {/* ── SDGs (Metrics / Goals) ── */}
+                {sdgs.length > 0 && (
+                  <div style={{ marginTop: 8 }}>
+                    <p style={{ fontFamily: "Onest, sans-serif", fontWeight: 400, fontSize: 18, color: "#000", margin: "0 0 8px 0", lineHeight: 1 }}>
+                      Sustainable Development Goals
+                    </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+                      {sdgs.map((sdg: any, i: number) => {
+                        let filename: string | null = null;
+                        if (typeof sdg === "string") {
+                          filename = sdg;
+                        } else if (typeof sdg === "object" && sdg !== null) {
+                          filename = sdg.content_url || sdg.name || null;
+                        }
+                        if (!filename) return null;
+                        if (!filename.includes(".png") && !filename.includes(".jpg") && !filename.includes(".jpeg")) {
+                          filename = `${filename}.png`;
+                        }
+                        const imagePath = `/sdg_pngs/${filename}`;
+                        return (
+                          <img
+                            key={i}
+                            src={imagePath}
+                            alt={`SDG ${filename}`}
+                            title={`SDG ${filename}`}
+                            style={{ width: 80, height: 80, objectFit: "contain", borderRadius: 4, boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              const div = document.createElement("div");
+                              div.style.cssText = "padding: 8px 12px; background: #f5f5f5; border-radius: 4px; font-family: Onest, sans-serif; font-size: 12px; color: #002147; border: 1px solid #ddd;";
+                              div.textContent = filename;
+                              target.parentNode?.replaceChild(div, target);
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -226,59 +222,45 @@ export default function LivingLabPage() {
               </div>
             )}
 
-            {/* ── SDGs (Metrics / Goals) ── */}
-            {sdgs.length > 0 && (
-              <div style={{ padding: "16px 0" }}>
-                <p style={{ fontFamily: "Onest, sans-serif", fontWeight: 400, fontSize: 36, color: "#000", margin: "0 0 10px 0", lineHeight: 1 }}>
-                  Sustainable Development Goals
+            {/* ── Members ── */}
+            {members.length > 0 && (
+              <div style={{ marginTop: 24 }}>
+                <p style={{ fontFamily: "Onest, sans-serif", fontWeight: 400, fontSize: 36, color: "#000", textAlign: "center", margin: "0 0 16px 0" }}>
+                  Members
                 </p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  {sdgs.map((sdg: any, i: number) => (
-                    <p key={i} style={{ fontFamily: "Onest, sans-serif", fontWeight: 400, fontSize: 24, color: "#000", margin: 0, lineHeight: 1.4 }}>
-                      {typeof sdg === "string" ? sdg : sdg.name ?? JSON.stringify(sdg)}
-                    </p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 24, justifyContent: "center" }}>
+                  {members.map((member, i) => (
+                    <MemberBlock
+                      key={i}
+                      name={member.name}
+                      profilePictureUrl={member.profile_picture_url}
+                    />
                   ))}
                 </div>
               </div>
             )}
 
             {/* ── Published Media ── */}
-            <div style={{ marginTop: 8 }}>
+            <div style={{ marginTop: 24 }}>
               <p style={{ fontFamily: "Onest, sans-serif", fontWeight: 400, fontSize: 36, color: "#000", textAlign: "center", margin: "0 0 8px 0" }}>
                 Published Media
               </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {publications.map((pub) => (
-                  <div
-                    key={pub.id}
-                    style={{
-                      backgroundColor: "#fff",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "44px 30px",
-                      maxHeight: 300,
-                      overflow: "hidden",
-                    }}
-                  >
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4, maxWidth: 736, color: "#002147" }}>
-                      <p style={{ fontFamily: "Onest, sans-serif", fontWeight: 700, fontSize: 24, color: "#002147", margin: 0, lineHeight: "normal" }}>
-                        {pub.title}
-                      </p>
-                      <p style={{ fontFamily: "Roboto, sans-serif", fontWeight: 400, fontSize: 9, color: "#002147", margin: 0 }}>
-                        {pub.authors}
-                      </p>
-                      <p style={{ fontFamily: "Roboto, sans-serif", fontWeight: 300, fontSize: 9, color: "#002147", margin: 0 }}>
-                        Published Online: {pub.publishedDate}
-                      </p>
-                    </div>
-                    <BookmarkButton
-                      active={bookmarks.has(pub.id)}
-                      onClick={() => toggleBookmark(pub.id)}
+              {media.length === 0 ? (
+                <p style={{ fontFamily: "Onest, sans-serif", fontSize: 14, color: "#888", textAlign: "center", marginTop: 16 }}>
+                  No published media found for this lab.
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {media.map((item) => (
+                    <ResultPanel
+                      key={item.id}
+                      result={item}
+                      selectedId={selectedMediaId}
+                      onSelect={setSelectedMediaId}
                     />
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
 
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Lab } from '../types';
 
 interface BuildingPanelProps {
@@ -170,15 +171,25 @@ export default function BuildingPanel({ buildingName, onClose }: BuildingPanelPr
             onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)')}
             onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
           >
-            <div style={{
-              fontFamily: 'Onest, sans-serif',
-              fontSize: 16,
-              fontWeight: 700,
-              color: 'var(--tertiary-clr-100)',
-              marginBottom: lab.biography ? 6 : 0,
-            }}>
-              {lab.name ?? lab.id}
-            </div>
+            <Link
+              href={`/living-lab?id=${encodeURIComponent(lab.id)}`}
+              style={{ textDecoration: 'none' }}
+            >
+              <div style={{
+                fontFamily: 'Onest, sans-serif',
+                fontSize: 16,
+                fontWeight: 700,
+                color: 'var(--tertiary-clr-100)',
+                marginBottom: lab.biography ? 6 : 0,
+                cursor: 'pointer',
+                transition: 'color 0.15s ease',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary-clr-300)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--tertiary-clr-100)')}
+              >
+                {lab.name ?? lab.id}
+              </div>
+            </Link>
 
             {lab.biography && (
               <div style={{
@@ -208,6 +219,7 @@ export default function BuildingPanel({ buildingName, onClose }: BuildingPanelPr
                 {lab.end_date?.slice(0, 4)}
               </div>
             )}
+
           </div>
         ))}
       </div>
