@@ -109,10 +109,10 @@ export default function LivingLabPage() {
       {/* Header */}
       <header className="header-container">
         <div className="header-top-row">
-          <div className="logo-section">
+          <a href="/" className="logo-section" style={{ textDecoration: "none", color: "inherit" }}>
             <img className="header-logo" src="/logo.jpg" alt="Logo" />
             <h1 className="header-title">Living Labs</h1>
-          </div>
+          </a>
           <div className="search-bar-wrapper">
             <SearchBar onResults={handleSearchResults} />
           </div>

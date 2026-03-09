@@ -51,54 +51,83 @@ export default function BuildingPanel({ buildingName, onClose }: BuildingPanelPr
       <div style={{
         padding: '20px 20px 16px',
         borderBottom: '1px solid #e0e0e0',
-        display: 'flex',
-        alignItems: 'flex-start',
-        justifyContent: 'space-between',
-        gap: 12,
         flexShrink: 0,
       }}>
-        <div>
-          <div style={{
-            fontFamily: 'Onest, sans-serif',
-            fontSize: 11,
-            fontWeight: 600,
-            color: 'var(--primary-clr-300)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.08em',
-            marginBottom: 4,
-          }}>
-            Building
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 12,
+          marginBottom: 12,
+        }}>
+          <div>
+            <div style={{
+              fontFamily: 'Onest, sans-serif',
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'var(--primary-clr-300)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              marginBottom: 4,
+            }}>
+              Building
+            </div>
+            <h2 style={{
+              fontFamily: 'Onest, sans-serif',
+              fontSize: 22,
+              fontWeight: 700,
+              color: 'var(--tertiary-clr-100)',
+              margin: 0,
+              lineHeight: 1.2,
+            }}>
+              {buildingName}
+            </h2>
           </div>
-          <h2 style={{
-            fontFamily: 'Onest, sans-serif',
-            fontSize: 22,
-            fontWeight: 700,
-            color: 'var(--tertiary-clr-100)',
-            margin: 0,
-            lineHeight: 1.2,
-          }}>
-            {buildingName}
-          </h2>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--tertiary-clr-100)',
+              fontSize: 22,
+              lineHeight: 1,
+              padding: 4,
+              flexShrink: 0,
+              opacity: 0.6,
+            }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '0.6')}
+            aria-label="Close"
+          >
+            ✕
+          </button>
         </div>
-        <button
-          onClick={onClose}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'var(--tertiary-clr-100)',
-            fontSize: 22,
-            lineHeight: 1,
-            padding: 4,
-            flexShrink: 0,
-            opacity: 0.6,
-          }}
-          onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
-          onMouseLeave={e => (e.currentTarget.style.opacity = '0.6')}
-          aria-label="Close"
-        >
-          ✕
-        </button>
+
+        {/* Building image */}
+        {buildingName && (
+          <div style={{ width: '100%', borderRadius: 8, overflow: 'hidden' }}>
+            <img
+              src={`/lab_images/${buildingName}.jpg`}
+              alt={buildingName}
+              style={{
+                width: '100%',
+                height: 'auto',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                if (target.src.includes('.jpg')) {
+                  target.src = `/lab_images/${buildingName}.png`;
+                } else {
+                  const container = target.parentElement;
+                  if (container) container.style.display = 'none';
+                }
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {/* Labs section header */}
@@ -158,22 +187,29 @@ export default function BuildingPanel({ buildingName, onClose }: BuildingPanelPr
         )}
 
         {!loading && labs.map(lab => (
-          <div
+          <Link
             key={lab.id}
-            style={{
-              background: '#fff',
-              border: '1px solid #e6e6e6',
-              borderRadius: 8,
-              padding: '14px 16px',
-              marginBottom: 10,
-              transition: 'box-shadow 0.15s ease',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)')}
-            onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}
+            href={`/living-lab?id=${encodeURIComponent(lab.id)}`}
+            style={{ textDecoration: 'none', display: 'block' }}
           >
-            <Link
-              href={`/living-lab?id=${encodeURIComponent(lab.id)}`}
-              style={{ textDecoration: 'none' }}
+            <div
+              style={{
+                background: '#fff',
+                border: '1px solid #e6e6e6',
+                borderRadius: 8,
+                padding: '14px 16px',
+                marginBottom: 10,
+                cursor: 'pointer',
+                transition: 'box-shadow 0.15s ease',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                (e.currentTarget.firstChild as HTMLElement).style.color = 'var(--primary-clr-300)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.boxShadow = 'none';
+                (e.currentTarget.firstChild as HTMLElement).style.color = 'var(--tertiary-clr-100)';
+              }}
             >
               <div style={{
                 fontFamily: 'Onest, sans-serif',
@@ -181,46 +217,41 @@ export default function BuildingPanel({ buildingName, onClose }: BuildingPanelPr
                 fontWeight: 700,
                 color: 'var(--tertiary-clr-100)',
                 marginBottom: lab.biography ? 6 : 0,
-                cursor: 'pointer',
                 transition: 'color 0.15s ease',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'var(--primary-clr-300)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'var(--tertiary-clr-100)')}
-              >
+              }}>
                 {lab.name ?? lab.id}
               </div>
-            </Link>
 
-            {lab.biography && (
-              <div style={{
-                fontFamily: 'Onest, sans-serif',
-                fontSize: 13,
-                color: 'var(--tertiary-clr-100)',
-                opacity: 0.7,
-                lineHeight: 1.5,
-                display: '-webkit-box',
-                WebkitLineClamp: 3,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-              }}>
-                {lab.biography}
-              </div>
-            )}
+              {lab.biography && (
+                <div style={{
+                  fontFamily: 'Onest, sans-serif',
+                  fontSize: 13,
+                  color: 'var(--tertiary-clr-100)',
+                  opacity: 0.7,
+                  lineHeight: 1.5,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 3,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}>
+                  {lab.biography}
+                </div>
+              )}
 
-            {(lab.start_date || lab.end_date) && (
-              <div style={{
-                fontFamily: 'Onest, sans-serif',
-                fontSize: 11,
-                color: 'var(--primary-clr-300)',
-                marginTop: 8,
-              }}>
-                {lab.start_date?.slice(0, 4)}
-                {lab.start_date && lab.end_date ? ' – ' : ''}
-                {lab.end_date?.slice(0, 4)}
-              </div>
-            )}
-
-          </div>
+              {(lab.start_date || lab.end_date) && (
+                <div style={{
+                  fontFamily: 'Onest, sans-serif',
+                  fontSize: 11,
+                  color: 'var(--primary-clr-300)',
+                  marginTop: 8,
+                }}>
+                  {lab.start_date?.slice(0, 4)}
+                  {lab.start_date && lab.end_date ? ' – ' : ''}
+                  {lab.end_date?.slice(0, 4)}
+                </div>
+              )}
+            </div>
+          </Link>
         ))}
       </div>
     </div>

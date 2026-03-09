@@ -73,10 +73,10 @@ export default function Home() {
       <header className="header-container">
         <div className="header-top-row">
           {/* Left side: logo and H1 */}
-          <div className="logo-section">
+          <a href="/" className="logo-section" style={{ textDecoration: "none", color: "inherit" }}>
             <img className="header-logo" src="/logo.jpg" alt="Logo" />
             <h1 className="header-title">Living Labs</h1>
-          </div>
+          </a>
 
           {/* Center: Search bar - wraps to next line on smaller screens */}
           <div className="search-bar-wrapper">
