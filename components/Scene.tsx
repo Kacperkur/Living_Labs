@@ -6,6 +6,7 @@ import React, { Suspense, useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { Bounds, Center, Html, useProgress, OrbitControls, OrthographicCamera } from '@react-three/drei';
 
+
 function Loader() {
     const { progress } = useProgress();
     return <Html center>{progress.toFixed(1)}%</Html>;
@@ -110,26 +111,6 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
         controls.update();
     }
 
-    function onWheel(e: React.WheelEvent) {
-        e.preventDefault();
-        const delta = e.deltaY;
-        const controls = controlsRef.current;
-        if (!controls) return;
-        const cam = controls.object as THREE.Camera;
-
-        const forward = new THREE.Vector3();
-        cam.getWorldDirection(forward);
-        forward.y = 0;
-        forward.normalize();
-
-        const zoom = (cam as any).zoom || 1;
-        const factor = 0.02 * (1 / zoom);
-        const movement = forward.multiplyScalar(delta * factor);
-        cam.position.add(movement);
-        controls.target.add(movement);
-        controls.update();
-    }
-
     return (
         <div
             style={{
@@ -143,7 +124,6 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
-            onWheel={onWheel}
         >
             <Canvas
                 shadows
@@ -155,7 +135,7 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
                     position={[300, 200, -200]}
                     rotation={[-Math.PI / 4, Math.PI / 4, 0]}
                     zoom={1.5}                                                                                                                                                    top={600}
-                    bottom={-100}                                                                                                                                                        
+                    bottom={100}                                                                                                                                                        
                     near={0.4}  
                     far={10000}
                 />
@@ -166,14 +146,20 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
                     shadow-mapSize-width={2048}
                     shadow-mapSize-height={2048}
                     shadow-camera-near={0.5}
-                    shadow-camera-far={1000}
-                    shadow-camera-left={-300}
-                    shadow-camera-right={300}
-                    shadow-camera-top={300}
-                    shadow-camera-bottom={-300}
+                    shadow-camera-far={3000}
+                    shadow-camera-left={-1200}
+                    shadow-camera-right={1200}
+                    shadow-camera-top={1200}
+                    shadow-camera-bottom={-1200}
                     shadow-bias={-0.0005}
                 />
                 <ambientLight intensity={0.6} />
+
+                {/* Ground plane to receive building shadows */}
+                <mesh rotation={[-Math.PI / 2, 0,0]} position={[0, -40, -500]} receiveShadow>
+                    <planeGeometry args={[20000, 20000]} />
+                    <meshStandardMaterial color="#57b75f" transparent opacity={0.5} />
+                </mesh>
 
                 <Suspense fallback={<Loader />}>
                     <Bounds fit={false} margin={2}>
@@ -190,7 +176,7 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
                     enablePan={false}
                     enableZoom={true}
                     minZoom={0.5}
-                    maxZoom={3}
+                    maxZoom={1.25}
                     screenSpacePanning={false}
                 />
 
