@@ -20,7 +20,7 @@ export default function Home() {
   const [selectedLabId, setSelectedLabId] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<SearchResult | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
-  const [cameraTargetBuilding, setCameraTargetBuilding] = useState<string | null>(null);
+  const [cameraTargetBuilding, setCameraTargetBuilding] = useState<string | null>("Edwards Auditorium");
 
   // Handle search from URL query parameter
   useEffect(() => {
