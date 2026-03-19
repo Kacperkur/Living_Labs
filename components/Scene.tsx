@@ -114,9 +114,8 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
     return (
         <div
             style={{
-                width: '100%',
-                height: '100%',
-                position: 'relative',
+                position: 'absolute',
+                inset: 0,
                 border: '2px ridge rgba(0, 0, 0, 0.2)',
                 boxSizing: 'border-box',
                 boxShadow: 'inset 0 8px 12px -8px rgba(0, 0, 0, 0.3)'
@@ -175,8 +174,8 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
                     enableRotate={false}
                     enablePan={false}
                     enableZoom={true}
-                    minZoom={0.5}
-                    maxZoom={1.25}
+                    minZoom={1.25}
+                    maxZoom={2}
                     screenSpacePanning={false}
                 />
 
