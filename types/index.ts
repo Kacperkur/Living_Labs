@@ -84,7 +84,9 @@ export interface PineconeMetadata {
  */
 export interface SearchRequest {
   query: string;
-  topK?: number; // Number of results to return (default: 5)
+  topK?: number;      // Page size — number of results per page (default: 20)
+  minScore?: number;  // Similarity threshold — results below this score are dropped (default: 0.65)
+  offset?: number;    // Pagination offset (default: 0)
 }
 
 /**
@@ -93,6 +95,7 @@ export interface SearchRequest {
 export interface SearchResponse {
   results: SearchResult[];
   count: number;
+  hasMore?: boolean;  // True if more results exist beyond this page
   notFound?: string[]; // IDs from Pinecone not found in Firebase
   pineconeResults?: unknown; // Raw Pinecone response for debugging
 }
@@ -121,7 +124,7 @@ export interface ApiErrorResponse {
  * Props for SearchBar component
  */
 export interface SearchBarProps {
-  onResults?: (matches: SearchResult[], query: string) => void;
+  onResults?: (matches: SearchResult[], query: string, hasMore: boolean) => void;
 }
 
 /**
@@ -253,6 +256,7 @@ export function toSearchResponse(data: unknown): SearchResponse {
   return {
     results: response.results.filter(isSearchResult),
     count: typeof response.count === 'number' ? response.count : response.results.length,
+    hasMore: typeof response.hasMore === 'boolean' ? response.hasMore : false,
     notFound: Array.isArray(response.notFound) ? response.notFound : [],
     pineconeResults: response.pineconeResults,
   };

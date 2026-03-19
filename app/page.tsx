@@ -17,6 +17,9 @@ export default function Home() {
   const searchParams = useSearchParams();
   const searchBarRef = useRef<SearchBarHandle | null>(null);
   const [results, setResults] = useState<SearchResult[] | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [currentQuery, setCurrentQuery] = useState('');
   const [selectedLabId, setSelectedLabId] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<SearchResult | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
@@ -29,6 +32,28 @@ export default function Home() {
       searchBarRef.current.triggerSearch(query);
     }
   }, [searchParams]);
+
+  // Append next page of search results
+  const loadMore = async () => {
+    if (!currentQuery || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const res = await fetch('/api/search-enhanced', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: currentQuery, offset: results?.length ?? 0 }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const newResults: SearchResult[] = Array.isArray(data.results) ? data.results : [];
+      setResults(prev => [...(prev ?? []), ...newResults]);
+      setHasMore(data.hasMore ?? false);
+    } catch {
+      // non-fatal — button stays visible so user can retry
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   // Handle media selection
   const handleMediaSelect = async (id: string | null) => {
@@ -80,7 +105,13 @@ export default function Home() {
 
           {/* Center: Search bar - wraps to next line on smaller screens */}
           <div className="search-bar-wrapper">
-            <SearchBar ref={searchBarRef} onResults={(matches, query) => setResults(matches)} />
+            <SearchBar ref={searchBarRef} onResults={(matches, query, more) => {
+              setResults(matches);
+              setCurrentQuery(query);
+              setHasMore(more);
+              setSelectedLabId(null);
+              setSelectedMedia(null);
+            }} />
           </div>
 
           {/* Right side: two H2s */}
@@ -135,6 +166,33 @@ export default function Home() {
                     return <ResultPanel key={key} result={r} selectedId={selectedLabId} onSelect={handleMediaSelect} />;
                   })}
               </div>
+
+              {/* Load more button — only shown when there are more results and no item is selected */}
+              {hasMore && !selectedLabId && (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0 8px' }}>
+                  <button
+                    onClick={loadMore}
+                    disabled={loadingMore}
+                    style={{
+                      fontFamily: 'Onest, sans-serif',
+                      fontSize: 14,
+                      fontWeight: 600,
+                      color: loadingMore ? 'var(--tertiary-clr-100)' : 'var(--background-clr-400)',
+                      background: loadingMore ? 'transparent' : 'var(--tertiary-clr-100)',
+                      border: '2px solid var(--tertiary-clr-100)',
+                      borderRadius: 24,
+                      padding: '8px 28px',
+                      cursor: loadingMore ? 'default' : 'pointer',
+                      opacity: loadingMore ? 0.5 : 1,
+                      transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={e => { if (!loadingMore) (e.currentTarget.style.background = 'var(--primary-clr-300)', e.currentTarget.style.borderColor = 'var(--primary-clr-300)'); }}
+                    onMouseLeave={e => { if (!loadingMore) (e.currentTarget.style.background = 'var(--tertiary-clr-100)', e.currentTarget.style.borderColor = 'var(--tertiary-clr-100)'); }}
+                  >
+                    {loadingMore ? 'Loading…' : 'Load more'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -16,7 +16,7 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onResults }, re
       const res = await fetch('/api/search-enhanced', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: q, topK: 5 }),
+        body: JSON.stringify({ query: q }),
       });
 
       if (!res.ok) {
@@ -95,22 +95,22 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onResults }, re
       }
 
       console.log(`🔍 Search completed: ${matches.length} results for "${q}"`, matches);
-      
+
       // Filter out any invalid results before passing to UI
-      const validMatches = matches.filter((match): match is SearchResult => 
+      const validMatches = matches.filter((match): match is SearchResult =>
         match !== null &&
-        typeof match === 'object' && 
+        typeof match === 'object' &&
         !Array.isArray(match) &&
         'id' in match &&
         typeof match.id === 'string' &&
         match.id.length > 0
       );
-      
+
       if (validMatches.length !== matches.length) {
         console.warn(`⚠️ Filtered out ${matches.length - validMatches.length} invalid results`);
       }
-      
-      if (onResults) onResults(validMatches, q);
+
+      if (onResults) onResults(validMatches, q, data.hasMore ?? false);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       setError(errorMessage);
