@@ -2,7 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { MediaDetailPanelProps, Lab, formatDate, toLabInfo } from '../types';
+import { MediaDetailPanelProps, Lab, formatDate } from '../types';
+import type { LabDetailsResponse } from '../app/api/lab-details/route';
+
+// Client-side in-memory cache — avoids re-fetching the same lab when the user
+// closes the panel and opens the same result again.
+const labCache = new Map<string, LabDetailsResponse>();
 
 export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetailPanelProps) {
   const [labInfo, setLabInfo] = useState<Lab | null>(null);
@@ -12,34 +17,31 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
   useEffect(() => {
     const fetchLabInfo = async () => {
       if (!selectedMedia) return;
-      
+
       const labId = selectedMedia?.lab_id || selectedMedia?.metadata?.lab_id;
       if (!labId) return;
 
+      // Serve from client cache if we already fetched this lab
+      const cached = labCache.get(labId);
+      if (cached) {
+        setLabInfo(cached as unknown as Lab);
+        setBuilding(cached.building);
+        return;
+      }
+
       setLoading(true);
       try {
-        console.log(`🔍 Fetching lab info for lab_id: ${labId}`);
-        const response = await fetch(`/api/fetch-lab-info?id=${encodeURIComponent(labId)}`);
-        
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-          console.error(`❌ Failed to fetch lab info (${response.status}):`, errorData);
+        const res = await fetch(`/api/lab-details?id=${encodeURIComponent(labId)}`);
+        if (!res.ok) {
+          console.error(`❌ Failed to fetch lab details (${res.status})`);
           return;
         }
-        
-        const rawData = await response.json();
-        const data = toLabInfo(rawData);
-        console.log('✅ Lab Info:', data);
-        setLabInfo(data);
-
-        const locationRes = await fetch(`/api/lab-location?id=${encodeURIComponent(labId)}`);
-        if (locationRes.ok) {
-          const locationData = await locationRes.json();
-          setBuilding(locationData.building ?? null);
-        }
+        const data: LabDetailsResponse = await res.json();
+        labCache.set(labId, data);
+        setLabInfo(data as unknown as Lab);
+        setBuilding(data.building);
       } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.error('❌ Error fetching lab info:', errorMessage);
+        console.error('❌ Error fetching lab details:', error instanceof Error ? error.message : error);
       } finally {
         setLoading(false);
       }

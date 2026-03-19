@@ -1,13 +1,38 @@
-import { getAdmin } from '../../../firebase-config';
 import { NextResponse } from 'next/server';
 import { Firestore } from 'firebase-admin/firestore';
 
-let db: Firestore | null = null;
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const adminModule = require('../../../firebase-config');
+const db: Firestore = adminModule.firestore();
+
+// ─── Cache ────────────────────────────────────────────────────────────────────
+// Media lists don't change often — 5 minutes is safe.
+
+interface CacheEntry { data: object[]; expiresAt: number; }
+const cache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 5 * 60_000;
+
+function getCached(id: string): object[] | null {
+  const entry = cache.get(id);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) { cache.delete(id); return null; }
+  return entry.data;
+}
+
+function setCache(id: string, data: object[]): void {
+  if (cache.size >= 500) {
+    const oldest = cache.keys().next().value;
+    if (oldest) cache.delete(oldest);
+  }
+  cache.set(id, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
+// ─── Route ────────────────────────────────────────────────────────────────────
 
 /**
  * GET /api/media-by-lab?id=<labId>
  * Returns all media documents for a given lab from Firestore.
- * Tries both Firestore document reference and plain string lab_id fields.
+ * Queries by both Firestore reference and string lab_id in parallel.
  */
 export async function GET(req: Request) {
   try {
@@ -18,14 +43,15 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing 'id' query param" }, { status: 400 });
     }
 
-    if (!db) {
-      const admin = await getAdmin();
-      db = admin.firestore();
+    const cached = getCached(labId);
+    if (cached) {
+      console.log(`⚡ Cache hit: media-by-lab ${labId}`);
+      return NextResponse.json({ media: cached });
     }
 
     const labRef = db.collection('labs').doc(labId);
 
-    // Query by Firestore reference (most common) and by string in parallel
+    // Query by Firestore reference and plain string in parallel
     const [refSnap, strSnap] = await Promise.all([
       db.collection('media').where('lab_id', '==', labRef).get(),
       db.collection('media').where('lab_id', '==', labId).get(),
@@ -43,7 +69,7 @@ export async function GET(req: Request) {
         const labIdValue = data.lab_id;
         const resolvedLabId =
           labIdValue && typeof labIdValue === 'object' && 'id' in labIdValue
-            ? labIdValue.id
+            ? (labIdValue as { id: string }).id
             : typeof labIdValue === 'string' ? labIdValue : labId;
 
         media.push({
@@ -62,7 +88,8 @@ export async function GET(req: Request) {
       }
     }
 
-    console.log(`✅ Found ${media.length} media items for lab ${labId}`);
+    setCache(labId, media);
+    console.log(`✅ media-by-lab: ${media.length} items for lab ${labId}`);
     return NextResponse.json({ media });
 
   } catch (error: unknown) {

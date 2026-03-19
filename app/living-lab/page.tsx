@@ -27,11 +27,9 @@ export default function LivingLabPage() {
     content_url: null,
     lab_id: lab.id || "",
     lab_name: lab.name || "Unnamed Lab",
-    start_date: lab.start_date || null,
-    end_date: lab.end_date || null,
+    published: null,
     score: 1.0,
-    authors: lab.location ? [lab.location] : [],
-    collection: "lab",
+    collection: "media",
     metadata: {
       biography: lab.biography || "",
       end_date: lab.end_date || null,
@@ -56,41 +54,33 @@ export default function LivingLabPage() {
         const labId = searchParams.get("id");
         if (!labId) throw new Error("Lab ID not provided");
 
-        const response = await fetch(`/api/fetch-lab-info?id=${encodeURIComponent(labId)}`, {
-          signal: controller.signal,
-          headers: { "Content-Type": "application/json" },
-        });
+        const encoded = encodeURIComponent(labId);
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.message || `HTTP ${response.status}: Failed to fetch lab info`);
+        // Fetch lab details and media in parallel — they're independent of each other.
+        // lab-details replaces the previous 3 sequential calls (fetch-lab-info,
+        // lab-members, lab-location) with one combined server-side call.
+        const [labRes, mediaRes] = await Promise.all([
+          fetch(`/api/lab-details?id=${encoded}`, { signal: controller.signal }),
+          fetch(`/api/media-by-lab?id=${encoded}`, { signal: controller.signal }),
+        ]);
+
+        if (!labRes.ok) {
+          const errorData = await labRes.json().catch(() => ({}));
+          throw new Error(errorData.message || `HTTP ${labRes.status}: Failed to fetch lab info`);
         }
 
-        const data = await response.json();
-        if (!data) throw new Error("No lab information available");
+        const labData = await labRes.json();
+        if (!labData) throw new Error("No lab information available");
 
-        const transformed = transformLabToSearchResult(data);
-        if (isMounted) setLab(transformed);
+        if (isMounted) {
+          setLab(transformLabToSearchResult(labData));
+          setMembers(labData.members ?? []);
+          setBuilding(labData.building ?? null);
+        }
 
-        // Fetch media for this lab
-        const mediaRes = await fetch(`/api/media-by-lab?id=${encodeURIComponent(labId)}`, { signal: controller.signal });
         if (mediaRes.ok) {
           const mediaData = await mediaRes.json();
           if (isMounted) setMedia(mediaData.media ?? []);
-        }
-
-        // Fetch members for this lab
-        const membersRes = await fetch(`/api/lab-members?id=${encodeURIComponent(labId)}`, { signal: controller.signal });
-        if (membersRes.ok) {
-          const membersData = await membersRes.json();
-          if (isMounted) setMembers(membersData.members ?? []);
-        }
-
-        // Fetch building name for lab image
-        const locationRes = await fetch(`/api/lab-location?id=${encodeURIComponent(labId)}`, { signal: controller.signal });
-        if (locationRes.ok) {
-          const locationData = await locationRes.json();
-          if (isMounted) setBuilding(locationData.building ?? null);
         }
       } catch (err: any) {
         if (err.name !== "AbortError") {

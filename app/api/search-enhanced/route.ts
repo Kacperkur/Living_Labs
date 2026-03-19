@@ -1,5 +1,4 @@
 import { Pinecone } from '@pinecone-database/pinecone';
-import { getAdmin } from '../../../firebase-config';
 import { NextResponse } from 'next/server';
 import { Timestamp, Firestore } from 'firebase-admin/firestore';
 import {
@@ -14,17 +13,45 @@ if (!apiKey) console.warn("⚠️ Missing PINECONE_API_KEY environment variable"
 
 const pc = new Pinecone({ apiKey: apiKey as string });
 const index = pc.index("livinglabsdemo").namespace("media");
-let db: Firestore | null = null;
 
-// How many results to fetch from Pinecone before threshold filtering.
-// Larger than pageSize so filtering still leaves enough results.
-const PINECONE_FETCH_LIMIT = 100;
+// Module-level db — firebase-config.js calls initializeApp() at load time so
+// admin.firestore() is safe to call here without any async work.
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const adminModule = require('../../../firebase-config');
+const db: Firestore = adminModule.firestore();
 
-// Default similarity threshold — results below this score are dropped.
 const DEFAULT_MIN_SCORE = 0.3;
-
-// Default page size
 const DEFAULT_PAGE_SIZE = 20;
+
+// ─── In-memory query cache ────────────────────────────────────────────────────
+// TTL = 60 s. Eliminates Pinecone + Firestore round-trips for repeated queries.
+// The module-level Map survives between requests in the same server process.
+interface CacheEntry { response: SearchResponse; expiresAt: number; }
+const queryCache = new Map<string, CacheEntry>();
+const CACHE_TTL_MS = 60_000;
+const MAX_CACHE_ENTRIES = 200;
+
+function cacheKey(query: string, minScore: number, offset: number, topK: number): string {
+  return `${query.toLowerCase().trim()}|${minScore}|${offset}|${topK}`;
+}
+
+function getCached(key: string): SearchResponse | null {
+  const entry = queryCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) { queryCache.delete(key); return null; }
+  return entry.response;
+}
+
+function setCache(key: string, response: SearchResponse): void {
+  if (queryCache.size >= MAX_CACHE_ENTRIES) {
+    // Evict oldest entry
+    const oldest = queryCache.keys().next().value;
+    if (oldest) queryCache.delete(oldest);
+  }
+  queryCache.set(key, { response, expiresAt: Date.now() + CACHE_TTL_MS });
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function extractRecordId(h: Record<string, unknown>): string | null {
   if (!h) return null;
@@ -41,37 +68,6 @@ function extractScore(h: Record<string, unknown>): number {
   if (typeof h._score === 'number') return h._score;
   if (typeof h.score === 'number') return h.score;
   return 0;
-}
-
-// Single-RPC Firestore enrichment using getAll() instead of N individual .get() calls.
-async function enrichWithFirestore(mediaIds: string[]): Promise<Map<string, EnrichedMedia>> {
-  const enrichedMap = new Map<string, EnrichedMedia>();
-  const ids = Array.from(new Set(mediaIds.filter(Boolean)));
-  if (ids.length === 0) return enrichedMap;
-
-  const mediaCollection = db!.collection('media');
-  const docRefs = ids.map(id => mediaCollection.doc(id));
-
-  try {
-    const snapshots = await db!.getAll(...docRefs);
-    snapshots.forEach(snap => {
-      if (!snap.exists) return;
-      const data = snap.data()!;
-      enrichedMap.set(snap.id, {
-        id: snap.id,
-        title: extractField(data, ['title', 'name', 'Title', 'Name']) as string | null,
-        author: normalizeAuthor(extractField(data, ['author', 'authors', 'Author', 'Authors', 'creator', 'Creator'])),
-        content_url: extractField(data, ['content_url', 'contentUrl', 'url', 'mediaUrl', 'media_url', 'fileUrl', 'file_url', 'downloadUrl', 'download_url']) as string | null,
-        lab_id: normalizeLabId(extractField(data, ['lab_id', 'labId', 'lab', 'Lab'])),
-        lab_name: extractField(data, ['lab_name', 'labName', 'displayName']) as string | null,
-        published: data.published instanceof Timestamp ? data.published : null,
-      });
-    });
-  } catch (error) {
-    console.error('Firestore getAll error:', error);
-  }
-
-  return enrichedMap;
 }
 
 function extractField(data: Record<string, unknown>, keys: string[]): unknown {
@@ -95,6 +91,42 @@ function normalizeLabId(value: unknown): string | null {
   return typeof value === 'string' ? value : null;
 }
 
+// ─── Firestore enrichment ─────────────────────────────────────────────────────
+// Uses db.getAll() — single RPC for all IDs instead of N individual .get() calls.
+// Only called for IDs where Pinecone metadata is incomplete.
+
+async function enrichWithFirestore(mediaIds: string[]): Promise<Map<string, EnrichedMedia>> {
+  const enrichedMap = new Map<string, EnrichedMedia>();
+  const ids = Array.from(new Set(mediaIds.filter(Boolean)));
+  if (ids.length === 0) return enrichedMap;
+
+  const mediaCollection = db.collection('media');
+  const docRefs = ids.map(id => mediaCollection.doc(id));
+
+  try {
+    const snapshots = await db.getAll(...docRefs);
+    snapshots.forEach(snap => {
+      if (!snap.exists) return;
+      const data = snap.data()!;
+      enrichedMap.set(snap.id, {
+        id: snap.id,
+        title: extractField(data, ['title', 'name', 'Title', 'Name']) as string | null,
+        author: normalizeAuthor(extractField(data, ['author', 'authors', 'Author', 'Authors', 'creator', 'Creator'])),
+        content_url: extractField(data, ['content_url', 'contentUrl', 'url', 'mediaUrl', 'media_url', 'fileUrl', 'file_url', 'downloadUrl', 'download_url']) as string | null,
+        lab_id: normalizeLabId(extractField(data, ['lab_id', 'labId', 'lab', 'Lab'])),
+        lab_name: extractField(data, ['lab_name', 'labName', 'displayName']) as string | null,
+        published: data.published instanceof Timestamp ? data.published : null,
+      });
+    });
+  } catch (error) {
+    console.error('Firestore getAll error:', error);
+  }
+
+  return enrichedMap;
+}
+
+// ─── Route ────────────────────────────────────────────────────────────────────
+
 export async function POST(req: Request) {
   try {
     const body = await req.json() as SearchRequest;
@@ -113,71 +145,91 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing search query" }, { status: 400 });
     }
 
-    if (!db) {
-      const admin = await getAdmin();
-      db = admin.firestore();
+    const key = cacheKey(queryText, minScore, offset, topK);
+    const cached = getCached(key);
+    if (cached) {
+      console.log(`⚡ Cache hit: "${queryText}" (offset: ${offset})`);
+      return NextResponse.json(cached);
     }
 
     console.log(`🔍 Search: "${queryText}" (pageSize: ${topK}, minScore: ${minScore}, offset: ${offset})`);
 
-    // 1. Fetch more than we need from Pinecone, then threshold-filter client-side.
-    //    This avoids re-fetching on subsequent pages while keeping Pinecone calls bounded.
+    // Adaptive fetch: over-fetch just enough to survive threshold filtering.
+    // 3× the needed results, capped at 100. Much faster than always asking for 100.
+    const fetchLimit = Math.min((offset + topK) * 3, 100);
+
+    // 1. Pinecone semantic search
     const pineconeRes = await index.searchRecords({
-      query: {
-        topK: PINECONE_FETCH_LIMIT,
-        inputs: { text: queryText }
-      },
-      fields: ['title', 'author', 'content_url']
+      query: { topK: fetchLimit, inputs: { text: queryText } },
+      fields: ['title', 'author', 'content_url', 'lab_id', 'lab_name']
     });
 
     const rawHits = (pineconeRes?.result?.hits ?? []) as unknown as Record<string, unknown>[];
 
-    // 2. Filter by similarity threshold — drop noise
+    // 2. Threshold filter
     const qualifiedHits = rawHits.filter(h => extractScore(h) >= minScore);
 
     // 3. Paginate
     const pageHits = qualifiedHits.slice(offset, offset + topK);
     const hasMore = qualifiedHits.length > offset + topK;
 
-    console.log(`📍 Pinecone: ${rawHits.length} raw → ${qualifiedHits.length} above threshold (${minScore}) → ${pageHits.length} on page`);
+    console.log(`📍 Pinecone: ${rawHits.length} raw → ${qualifiedHits.length} above threshold → ${pageHits.length} on page`);
 
     if (pageHits.length === 0) {
-      return NextResponse.json({ results: [], count: 0, hasMore: false, notFound: [] } satisfies SearchResponse);
+      const empty: SearchResponse = { results: [], count: 0, hasMore: false, notFound: [] };
+      setCache(key, empty);
+      return NextResponse.json(empty);
     }
 
-    // 4. Extract IDs for Firestore lookup
-    const pageIds = pageHits.map(extractRecordId).filter(Boolean) as string[];
-    const uniqueIds = Array.from(new Set(pageIds));
+    // 4. For each hit, check whether Pinecone metadata already has what we need.
+    //    Only call Firestore for IDs where metadata is incomplete — saves the RPC
+    //    entirely when your Pinecone index is up to date.
+    const needsEnrichment: string[] = [];
+    const pineconeMetaMap = new Map<string, PineconeMetadata>();
 
-    // 5. Single-RPC Firestore enrichment
-    const enrichedMap = await enrichWithFirestore(uniqueIds);
-    const notFound = uniqueIds.filter(id => !enrichedMap.has(id));
-
-    if (notFound.length > 0) {
-      console.warn(`⚠️ ${notFound.length} Pinecone IDs not found in Firestore:`, notFound);
+    for (const hit of pageHits) {
+      const id = extractRecordId(hit);
+      if (!id) continue;
+      const meta = (hit.metadata ?? (hit.record as Record<string, unknown> | undefined)?.metadata ?? {}) as PineconeMetadata;
+      pineconeMetaMap.set(id, meta);
+      // Only enrich from Firestore if Pinecone is missing key fields
+      if (!meta.title || !meta.content_url) needsEnrichment.push(id);
     }
 
-    // 6. Build results — Map lookup instead of O(n²) find()
+    const firestoreMap = needsEnrichment.length > 0
+      ? await enrichWithFirestore(needsEnrichment)
+      : new Map<string, EnrichedMedia>();
+
+    if (needsEnrichment.length > 0) {
+      console.log(`🔥 Firestore enriched ${firestoreMap.size}/${needsEnrichment.length} docs (${pageHits.length - needsEnrichment.length} served from Pinecone metadata)`);
+    }
+
+    // 5. Build results
+    const notFound: string[] = [];
     const results = pageHits.map(hit => {
       const hitId = extractRecordId(hit);
-      const score = extractScore(hit);
-      const firestore = hitId ? enrichedMap.get(hitId) : undefined;
+      if (!hitId) return null;
 
-      const pineconeMetadata = (hit.metadata ?? (hit.record as Record<string, unknown> | undefined)?.metadata ?? null) as PineconeMetadata | null;
+      const score = extractScore(hit);
+      const pm = pineconeMetaMap.get(hitId);
+      const fs = firestoreMap.get(hitId);
+
+      if (needsEnrichment.includes(hitId) && !fs) notFound.push(hitId);
 
       return {
-        id: hitId ?? '',
+        id: hitId,
         score,
-        title: firestore?.title ?? pineconeMetadata?.title ?? null,
-        author: firestore?.author ?? pineconeMetadata?.author ?? null,
-        content_url: firestore?.content_url ?? pineconeMetadata?.content_url ?? null,
-        lab_id: firestore?.lab_id ?? pineconeMetadata?.lab_id ?? null,
-        lab_name: firestore?.lab_name ?? pineconeMetadata?.lab_name ?? null,
-        published: firestore?.published ? firestore.published.toDate().toISOString() : (pineconeMetadata?.published ?? null),
+        title: fs?.title ?? pm?.title ?? null,
+        author: fs?.author ?? pm?.author ?? null,
+        content_url: fs?.content_url ?? pm?.content_url ?? null,
+        lab_id: fs?.lab_id ?? pm?.lab_id ?? null,
+        lab_name: fs?.lab_name ?? pm?.lab_name ?? null,
+        published: fs?.published
+          ? fs.published.toDate().toISOString()
+          : (pm?.published ?? null),
         collection: 'media' as const,
-        pineconeMetadata: pineconeMetadata ?? undefined,
       };
-    }).filter(r => r.id.length > 0); // drop any hits we couldn't extract an ID from
+    }).filter((r): r is NonNullable<typeof r> => r !== null);
 
     const response: SearchResponse = {
       results: results as SearchResponse['results'],
@@ -186,6 +238,7 @@ export async function POST(req: Request) {
       notFound,
     };
 
+    setCache(key, response);
     return NextResponse.json(response);
 
   } catch (error: unknown) {
