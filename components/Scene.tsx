@@ -152,10 +152,10 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
             >
                 <OrthographicCamera
                     makeDefault
-                    position={[10, 300, -400]}
-                    rotation={[-Math.PI / 6, Math.PI / 4, 0]}
+                    position={[200, 180, -500]}
+                    rotation={[-Math.PI / 4, Math.PI / 4, 0]}
                     zoom={1}
-                    near={0.1}
+                    near={0.01}
                     far={10000}
                 />
                 <directionalLight
