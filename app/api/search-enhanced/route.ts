@@ -20,7 +20,7 @@ const index = pc.index("livinglabsdemo").namespace("media");
 const adminModule = require('../../../firebase-config');
 const db: Firestore = adminModule.firestore();
 
-const DEFAULT_MIN_SCORE = 0.3;
+const DEFAULT_MIN_SCORE = 0.1;
 const DEFAULT_PAGE_SIZE = 20;
 
 // ─── In-memory query cache ────────────────────────────────────────────────────
@@ -28,7 +28,7 @@ const DEFAULT_PAGE_SIZE = 20;
 // The module-level Map survives between requests in the same server process.
 interface CacheEntry { response: SearchResponse; expiresAt: number; }
 const queryCache = new Map<string, CacheEntry>();
-const CACHE_TTL_MS = 60_000;
+const CACHE_TTL_MS = 30_000;
 const MAX_CACHE_ENTRIES = 200;
 
 function cacheKey(query: string, minScore: number, offset: number, topK: number): string {
@@ -156,7 +156,7 @@ export async function POST(req: Request) {
 
     // Adaptive fetch: over-fetch just enough to survive threshold filtering.
     // 3× the needed results, capped at 100. Much faster than always asking for 100.
-    const fetchLimit = Math.min((offset + topK) * 3, 100);
+    const fetchLimit = Math.min((offset + topK) * 3, 200);
 
     // 1. Pinecone semantic search
     const pineconeRes = await index.searchRecords({
