@@ -43,10 +43,13 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing 'id' query param" }, { status: 400 });
     }
 
-    const cached = getCached(labId);
-    if (cached) {
-      console.log(`⚡ Cache hit: media-by-lab ${labId}`);
-      return NextResponse.json({ media: cached });
+    const nocache = searchParams.get('nocache') === '1';
+    if (!nocache) {
+      const cached = getCached(labId);
+      if (cached) {
+        console.log(`⚡ Cache hit: media-by-lab ${labId}`);
+        return NextResponse.json({ media: cached });
+      }
     }
 
     const labRef = db.collection('labs').doc(labId);
