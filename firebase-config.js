@@ -8,9 +8,7 @@ if (!admin.apps || admin.apps.length === 0) {
 
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    // Optionally, add databaseURL for Realtime Database or storageBucket for Cloud Storage
-    // databaseURL: "https://your-project-id.firebaseio.com",
-    // storageBucket: "gs://livinglabs-1a831.firebasestorage.app"
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'livinglabs-1a831.firebasestorage.app',
   });
 } else {
   // admin already initialized in this process — reuse it
