@@ -6,6 +6,7 @@ import { MediaDetailPanelProps, Lab, formatDate, toLabInfo } from '../types';
 
 export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetailPanelProps) {
   const [labInfo, setLabInfo] = useState<Lab | null>(null);
+  const [building, setBuilding] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -30,6 +31,12 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
         const data = toLabInfo(rawData);
         console.log('✅ Lab Info:', data);
         setLabInfo(data);
+
+        const locationRes = await fetch(`/api/lab-location?id=${encodeURIComponent(labId)}`);
+        if (locationRes.ok) {
+          const locationData = await locationRes.json();
+          setBuilding(locationData.building ?? null);
+        }
       } catch (error: unknown) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error('❌ Error fetching lab info:', errorMessage);
@@ -100,7 +107,7 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
         textAlign: 'center'
       }}>
         {/* Location Image */}
-        {labInfo?.location && (
+        {building && (
           <div style={{
             width: '100%',
             backgroundColor: 'var(--background-clr-400)',
@@ -108,8 +115,8 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
             borderRadius: 8
           }}>
             <img
-              src={`/lab_images/${labInfo.location}.jpg`}
-              alt={labInfo.location}
+              src={`/lab_images/${building}.jpg`}
+              alt={building}
               style={{
                 width: '100%',
                 height: 'auto',
@@ -118,15 +125,8 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
                 display: 'block'
               }}
               onError={(e) => {
-                // If image fails to load, try .png extension
-                const target = e.target as HTMLImageElement;
-                if (target.src.includes('.jpg')) {
-                  target.src = `/lab_images/${labInfo.location}.png`;
-                } else {
-                  // If still fails, hide the image container
-                  const container = target.parentElement;
-                  if (container) container.style.display = 'none';
-                }
+                const container = (e.target as HTMLImageElement).parentElement;
+                if (container) container.style.display = 'none';
               }}
             />
           </div>

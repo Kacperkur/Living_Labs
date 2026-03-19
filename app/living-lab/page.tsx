@@ -18,6 +18,7 @@ export default function LivingLabPage() {
   const [media, setMedia] = useState<SearchResult[]>([]);
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
   const [members, setMembers] = useState<{ name: string; profile_picture_url: string | null }[]>([]);
+  const [building, setBuilding] = useState<string | null>(null);
 
   const transformLabToSearchResult = useCallback((lab: any): SearchResult => ({
     id: lab.id || "",
@@ -84,6 +85,13 @@ export default function LivingLabPage() {
           const membersData = await membersRes.json();
           if (isMounted) setMembers(membersData.members ?? []);
         }
+
+        // Fetch building name for lab image
+        const locationRes = await fetch(`/api/lab-location?id=${encodeURIComponent(labId)}`, { signal: controller.signal });
+        if (locationRes.ok) {
+          const locationData = await locationRes.json();
+          if (isMounted) setBuilding(locationData.building ?? null);
+        }
       } catch (err: any) {
         if (err.name !== "AbortError") {
           console.error("Fetch failed:", err);
@@ -145,7 +153,7 @@ export default function LivingLabPage() {
             {/* ── Identification Info ── */}
             <div style={{ display: "flex", gap: 30, alignItems: "flex-start" }}>
               <img
-                src={`/lab_images/${lab.metadata?.location}.jpg`}
+                src={`/lab_images/${building}.jpg`}
                 alt={lab.lab_name || "Lab"}
                 onError={(e) => { (e.target as HTMLImageElement).style.background = "#c8d8e8"; (e.target as HTMLImageElement).removeAttribute("src"); }}
                 style={{ width: 598, height: 350, objectFit: "cover", flexShrink: 0, backgroundColor: "#c8d8e8" }}
