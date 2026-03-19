@@ -107,9 +107,9 @@ export function Model({ onBuildingClick, ...props }) {
         <BuildingLabel name="Green Hall" />
       </group>
 
-      <group name="Chemical Engineering" position={[16.056, 0, -558.227]} {...click('Chemical Engineering')}>
+      <group name="Crawford Hall" position={[16.056, 0, -558.227]} {...click('Crawford Hall')}>
         <mesh geometry={nodes.Chemical_Engineering.geometry} material={bld} rotation={[0, Math.PI / 2, 0]} scale={[15.411, 30.646, 45.565]} castShadow />
-        <BuildingLabel name="Chemical Engineering" yOffset={45} />
+        <BuildingLabel name="Crawford Hall" yOffset={45} />
       </group>
 
       <group name="Quinn Hall" position={[-237.922, 0, 405.745]} {...click('Quinn Hall')}>
@@ -157,7 +157,7 @@ export function Model({ onBuildingClick, ...props }) {
         <BuildingLabel name="Rodman Hall" yOffset={58} />
       </group>
 
-      <group name="Center for Biotechnology & Life Sciences" position={[-234.104, 3.207, -1351.334]} {...click('Center for Biotechnology & Life Sciences')}>
+      <group name="Center for Biotechnology and Life Sciences" position={[-234.104, 3.207, -1351.334]} {...click('Center for Biotechnology and Life Sciences')}>
         <mesh geometry={nodes['Center_for_Biotechnology_&_Life_Sciences'].geometry} material={bld} rotation={[0, -0.04, 0]} scale={[16.604, 44.473, 79.887]} castShadow />
         <BuildingLabel name="Ctr. for Biotech & Life Sci." yOffset={55} />
       </group>
@@ -167,7 +167,7 @@ export function Model({ onBuildingClick, ...props }) {
         <BuildingLabel name="Washburn Hall" />
       </group>
 
-      <group name="Beaupre Center for Chemical & Forensic Sciences" position={[-390.66, -3.347, -1200.865]} {...click('Beaupre Center for Chemical & Forensic Sciences')}>
+      <group name="Beaupre Center for Chemical and Forensic Sciences" position={[-390.66, -3.347, -1200.865]} {...click('Beaupre Center for Chemical and Forensic Sciences')}>
         <mesh geometry={nodes['Beaupre_Center_for_Chemical_&_Forensic_Sciences'].geometry} material={bld} rotation={[Math.PI, -1.478, Math.PI]} scale={[14.009, 37.507, 94.419]} castShadow />
         <BuildingLabel name="Beaupre Center" />
       </group>

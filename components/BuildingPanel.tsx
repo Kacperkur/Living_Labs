@@ -106,7 +106,7 @@ export default function BuildingPanel({ buildingName, onClose }: BuildingPanelPr
 
         {/* Building image */}
         {buildingName && (
-          <div style={{ width: '100%', borderRadius: 8, overflow: 'hidden' }}>
+          <div key={buildingName} style={{ width: '100%', borderRadius: 8, overflow: 'hidden' }}>
             <img
               src={`/lab_images/${buildingName}.jpg`}
               alt={buildingName}
