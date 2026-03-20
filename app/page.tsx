@@ -137,6 +137,7 @@ export default function Home() {
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
+          overflow: 'hidden',
           transition: 'width 0.3s ease'
         }}>
           {/* Map - takes remaining space or full space when no results */}
