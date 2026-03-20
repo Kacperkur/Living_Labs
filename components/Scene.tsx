@@ -12,6 +12,35 @@ function Loader() {
     return <Html center>{progress.toFixed(1)}%</Html>;
 }
 
+const ZOOM_START = 0.75;
+const ZOOM_TARGET = 1.5;
+const ZOOM_EASE = 0.03; // lower = slower ease
+
+function ZoomIntro() {
+    const { camera } = useThree();
+    const done = useRef(false);
+
+    useEffect(() => {
+        camera.zoom = ZOOM_START;
+        camera.updateProjectionMatrix();
+    }, [camera]);
+
+    useFrame(() => {
+        if (done.current) return;
+        const diff = ZOOM_TARGET - camera.zoom;
+        if (Math.abs(diff) < 0.001) {
+            camera.zoom = ZOOM_TARGET;
+            camera.updateProjectionMatrix();
+            done.current = true;
+            return;
+        }
+        camera.zoom += diff * ZOOM_EASE;
+        camera.updateProjectionMatrix();
+    });
+
+    return null;
+}
+
 // Smoothly animates the OrbitControls target (and camera) toward a building's
 // actual world position, looked up directly from the scene graph.
 function CameraAnimator({
@@ -23,19 +52,22 @@ function CameraAnimator({
 }) {
     const { scene } = useThree();
     const destination = useRef<THREE.Vector3 | null>(null);
-
-    useEffect(() => {
-        if (!targetBuilding) { destination.current = null; return; }
-        const obj = scene.getObjectByName(targetBuilding);
-        if (obj) {
-            const worldPos = new THREE.Vector3();
-            obj.getWorldPosition(worldPos);
-            worldPos.y = 0;
-            destination.current = worldPos;
-        }
-    }, [targetBuilding, scene]);
+    const resolved = useRef<string | null>(null);
 
     useFrame(() => {
+        // Retry lookup every frame until the object appears in the scene.
+        // This handles the case where targetBuilding is set before the model loads.
+        if (targetBuilding && resolved.current !== targetBuilding) {
+            const obj = scene.getObjectByName(targetBuilding);
+            if (obj) {
+                const worldPos = new THREE.Vector3();
+                obj.getWorldPosition(worldPos);
+                worldPos.y = 0;
+                destination.current = worldPos;
+                resolved.current = targetBuilding;
+            }
+        }
+
         if (!destination.current || !controlsRef.current) return;
         const controls = controlsRef.current;
         const dist = controls.target.distanceTo(destination.current);
@@ -45,6 +77,13 @@ function CameraAnimator({
         controls.object.position.add(step);
         controls.update();
     });
+
+    // Reset resolved ref when target changes so the lookup runs again.
+    useEffect(() => {
+        if (resolved.current !== targetBuilding) {
+            destination.current = null;
+        }
+    }, [targetBuilding]);
 
     return null;
 }
@@ -133,9 +172,10 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
                     makeDefault
                     position={[300, 200, -200]}
                     rotation={[-Math.PI / 4, Math.PI / 4, 0]}
-                    zoom={1.5}                                                                                                                                                    top={600}
-                    bottom={100}                                                                                                                                                        
-                    near={0.4}  
+                    zoom={1.5}
+                    top={350}
+                    bottom={-150}
+                    near={0.4}
                     far={10000}
                 />
                 <directionalLight
@@ -174,11 +214,12 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
                     enableRotate={false}
                     enablePan={false}
                     enableZoom={true}
-                    minZoom={1.25}
+                    minZoom={0.75}
                     maxZoom={2}
                     screenSpacePanning={false}
                 />
 
+                <ZoomIntro />
                 <CameraAnimator
                     targetBuilding={cameraTargetBuilding ?? null}
                     controlsRef={controlsRef}

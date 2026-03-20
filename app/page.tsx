@@ -23,7 +23,7 @@ export default function Home() {
   const [selectedLabId, setSelectedLabId] = useState<string | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<SearchResult | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
-  const [cameraTargetBuilding, setCameraTargetBuilding] = useState<string | null>("Edwards Auditorium");
+  const [cameraTargetBuilding, setCameraTargetBuilding] = useState<string | null>("Washburn Hall");
 
   // Handle search from URL query parameter
   useEffect(() => {
@@ -137,6 +137,7 @@ export default function Home() {
           display: 'flex',
           flexDirection: 'column',
           position: 'relative',
+          overflow: 'hidden',
           transition: 'width 0.3s ease'
         }}>
           {/* Map - takes remaining space or full space when no results */}

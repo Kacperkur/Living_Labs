@@ -23,6 +23,58 @@ const db: Firestore = adminModule.firestore();
 const DEFAULT_MIN_SCORE = 0.1;
 const DEFAULT_PAGE_SIZE = 20;
 
+// ─── Query sanitizer ──────────────────────────────────────────────────────────
+// Strips domain-specific filler words that pollute the embedding and cause
+// Pinecone to return loosely related results (e.g. "living lab climate" should
+// embed as "climate", not as "living lab + climate").
+// Words are matched as whole tokens (case-insensitive).
+
+// Single-word fillers — O(1) Set.has() lookup per token
+const FILLER_WORDS = new Set([
+  // domain fillers
+  'living', 'lab', 'labs',
+  'uri', 'university', 'research',
+  // question / conversational openers
+  'what', 'how', 'why', 'where', 'when', 'who',
+  'find', 'show', 'search', 'looking', 'look',
+  // academic meta-words
+  'paper', 'papers', 'study', 'studies', 'publication', 'publications',
+  'project', 'projects', 'topic', 'topics', 'work', 'about', 'related',
+  // common stop words
+  'a', 'an', 'the', 'and', 'or', 'of', 'in', 'on', 'at',
+  'for', 'to', 'with', 'by', 'from', 'is', 'are', 'that',
+]);
+
+// Multi-word phrases compiled once at module load — longest first so
+// "living labs" matches before "living" would get a chance to.
+const MULTI_WORD_FILLERS = [
+  'living labs',
+  'living lab',
+  'rhode island',
+];
+
+const MULTI_WORD_REGEX = new RegExp(
+  MULTI_WORD_FILLERS
+    .sort((a, b) => b.length - a.length)
+    .map(p => `\\b${p}\\b`)
+    .join('|'),
+  'gi'
+);
+
+function sanitizeQuery(raw: string): string {
+  const q = raw.toLowerCase().trim()
+    .replace(MULTI_WORD_REGEX, ' ')  // strip multi-word phrases (precompiled)
+    .replace(/\s+/g, ' ')            // collapse whitespace
+    .trim();
+
+  const tokens = q.split(' ').filter(t => t.length > 0 && !FILLER_WORDS.has(t));
+  const cleaned = tokens.join(' ').trim();
+
+  // If sanitizing removed everything, fall back to the original so we still
+  // return something rather than sending an empty string to Pinecone.
+  return cleaned.length > 0 ? cleaned : raw.trim();
+}
+
 // ─── In-memory query cache ────────────────────────────────────────────────────
 // TTL = 60 s. Eliminates Pinecone + Firestore round-trips for repeated queries.
 // The module-level Map survives between requests in the same server process.
@@ -152,7 +204,11 @@ export async function POST(req: Request) {
       return NextResponse.json(cached);
     }
 
-    console.log(`🔍 Search: "${queryText}" (pageSize: ${topK}, minScore: ${minScore}, offset: ${offset})`);
+    const pineconeQuery = sanitizeQuery(queryText);
+    if (pineconeQuery !== queryText.trim()) {
+      console.log(`🧹 Query sanitized: "${queryText}" → "${pineconeQuery}"`);
+    }
+    console.log(`🔍 Search: "${pineconeQuery}" (pageSize: ${topK}, minScore: ${minScore}, offset: ${offset})`);
 
     // Adaptive fetch: over-fetch just enough to survive threshold filtering.
     // 3× the needed results, capped at 100. Much faster than always asking for 100.
@@ -160,7 +216,7 @@ export async function POST(req: Request) {
 
     // 1. Pinecone semantic search
     const pineconeRes = await index.searchRecords({
-      query: { topK: fetchLimit, inputs: { text: queryText } },
+      query: { topK: fetchLimit, inputs: { text: pineconeQuery } },
       fields: ['title', 'author', 'content_url', 'lab_id', 'lab_name']
     });
 

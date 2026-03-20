@@ -1,23 +1,16 @@
-import { Pinecone } from '@pinecone-database/pinecone';
 import { NextResponse } from 'next/server';
+import { getAdmin } from '../../../firebase-config';
 import { Firestore } from 'firebase-admin/firestore';
 
-const apiKey = process.env.PINECONE_API_KEY;
-const pc = new Pinecone({ apiKey: apiKey as string });
-const labsIndex = pc.index("livinglabsdemo").namespace("labs");
-const mediaIndex = pc.index("livinglabsdemo").namespace("media");
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const adminModule = require('../../../firebase-config');
-const db: Firestore = adminModule.firestore();
+let db: Firestore | null = null;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface LabDetailsResponse {
   id: string;
   name: string | null;
-  location: string | null;   // from Pinecone metadata (city/area)
-  building: string | null;   // from Firestore Location field (used for building images)
+  location: string | null;
+  building: string | null;
   start_date: string | null;
   end_date: string | null;
   biography: string | null;
@@ -26,7 +19,6 @@ export interface LabDetailsResponse {
 }
 
 // ─── Cache ────────────────────────────────────────────────────────────────────
-// Lab details don't change often — 5 minutes is a safe TTL.
 
 interface CacheEntry { data: LabDetailsResponse; expiresAt: number; }
 const cache = new Map<string, CacheEntry>();
@@ -64,28 +56,27 @@ export async function GET(req: Request) {
       return NextResponse.json(cached);
     }
 
-    // Fetch Pinecone metadata and Firestore document in parallel — single round-trip each
-    const [pineconeRes, firestoreSnap] = await Promise.all([
-      labsIndex.fetch([labId]).catch(() => null),
-      db.collection('labs').doc(labId).get().catch(() => null),
-    ]);
-
-    // Pinecone: prefer labs namespace, fall back to media namespace
-    let pineconeRecord = pineconeRes?.records?.[labId] ?? null;
-    if (!pineconeRecord) {
-      const fallback = await mediaIndex.fetch([labId]).catch(() => null);
-      pineconeRecord = fallback?.records?.[labId] ?? null;
+    if (!db) {
+      const admin = await getAdmin();
+      db = admin.firestore();
     }
 
-    const pm = (pineconeRecord?.metadata ?? {}) as Record<string, unknown>;
-    const fs = firestoreSnap?.exists ? firestoreSnap.data()! : null;
+    const snap = await db.collection('labs').doc(labId).get();
 
-    if (!pineconeRecord && !fs) {
+    if (!snap.exists) {
       return NextResponse.json({ error: 'Lab not found', labId }, { status: 404 });
     }
 
-    // Normalize members array from Firestore
-    const rawMembers: unknown[] = Array.isArray(fs?.Members) ? fs!.Members : [];
+    const fs = snap.data()!;
+
+    const toISO = (ts: any): string | null => {
+      if (!ts) return null;
+      if (typeof ts.toDate === 'function') return ts.toDate().toISOString();
+      if (typeof ts === 'string') return ts;
+      return null;
+    };
+
+    const rawMembers: unknown[] = Array.isArray(fs.Members) ? fs.Members : [];
     const members = rawMembers.map((m: unknown) => {
       if (typeof m === 'string') return { name: m, profile_picture_url: null };
       const obj = m as Record<string, unknown>;
@@ -97,14 +88,13 @@ export async function GET(req: Request) {
 
     const result: LabDetailsResponse = {
       id: labId,
-      // Prefer Pinecone for semantic content, Firestore as fallback
-      name: (pm.name ?? fs?.name ?? null) as string | null,
-      location: (pm.location ?? fs?.location ?? null) as string | null,
-      building: (fs?.Location ?? null) as string | null,  // capital-L field = building name
-      start_date: (pm.start_date ?? fs?.start_date ?? null) as string | null,
-      end_date: (pm.end_date ?? fs?.end_date ?? null) as string | null,
-      biography: (pm.biography ?? fs?.biography ?? null) as string | null,
-      SDGs: Array.isArray(pm.SDGs) ? pm.SDGs : (Array.isArray(fs?.SDGs) ? fs!.SDGs : []),
+      name: (fs.lab_name ?? fs.name ?? null) as string | null,
+      location: (fs.Location ?? fs.location ?? null) as string | null,
+      building: (fs.Location ?? null) as string | null,
+      start_date: toISO(fs.start_date),
+      end_date: toISO(fs.end_date),
+      biography: (fs.biography ?? null) as string | null,
+      SDGs: Array.isArray(fs.SDGs) ? fs.SDGs : [],
       members,
     };
 

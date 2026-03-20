@@ -214,35 +214,39 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
                   justifyContent: 'center'
                 }}>
                   {labInfo.SDGs.map((sdg, index) => {
-                    // SDG can be a filename string directly, or we need to extract it
-                    let filename = null;
-                    if (typeof sdg === 'string') {
-                      filename = sdg;
-                    } else if (typeof sdg === 'object' && sdg !== null) {
-                      // Use the properties that exist on the SDG type
-                      filename = sdg.content_url || sdg.name || null;
-                    }
-                    if (!filename) {
-                      console.warn('Unable to extract filename from SDG:', sdg);
+                    const SDG_NAME_TO_NUMBER: Record<string, number> = {
+                      'No Poverty': 1,
+                      'Zero Hunger': 2,
+                      'Good Health and Well-Being': 3,
+                      'Quality Education': 4,
+                      'Gender Equality': 5,
+                      'Clean Water and Sanitation': 6,
+                      'Affordable and Clean Energy': 7,
+                      'Decent Work and Economic Growth': 8,
+                      'Industry, Innovation, and Infrastructure': 9,
+                      'Reduced Inequalities': 10,
+                      'Sustainable Cities and Communities': 11,
+                      'Responsible Consumption and Production': 12,
+                      'Climate Action': 13,
+                      'Life Below Water': 14,
+                      'Life on Land': 15,
+                      'Peace, Justice, and Strong Institutions': 16,
+                      'Partnerships for the Goals': 17,
+                    };
+                    const name = typeof sdg === 'string' ? sdg : (sdg?.name || sdg?.content_url || '');
+                    const num = SDG_NAME_TO_NUMBER[name];
+                    if (!num) {
+                      console.warn('Unknown SDG name:', name);
                       return null;
                     }
-                    
-                    // Ensure filename has .png extension if not already present
-                    if (!filename.includes('.png') && !filename.includes('.jpg') && !filename.includes('.jpeg')) {
-                      filename = `${filename}.png`;
-                    }
-                    
-                    // Construct path to local file in public/SDG_pngs folder
-                    const imagePath = `/SDG_pngs/${filename}`;
-                    
-                    console.log(`🎯 Loading SDG icon from: ${imagePath}`);
+                    const imagePath = `/SDG_pngs/E-WEB-Goal-${String(num).padStart(2, '0')}.png`;
                     
                     return (
                       <img
                         key={index}
                         src={imagePath}
-                        alt={`SDG ${filename}`}
-                        title={`SDG ${filename}`}
+                        alt={name}
+                        title={name}
                         style={{
                           width: 64,
                           height: 64,
@@ -261,7 +265,7 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
                           // Replace with text fallback
                           const div = document.createElement('div');
                           div.style.cssText = 'padding: 8px 12px; background-color: var(--background-clr-400); border-radius: 4px; font-family: Onest, sans-serif; font-size: 12px; color: var(--tertiary-clr-100); border: 1px solid #ddd;';
-                          div.textContent = filename;
+                          div.textContent = name;
                           target.parentNode?.replaceChild(div, target);
                         }}
                       />

@@ -174,29 +174,41 @@ export default function LivingLabPage() {
                     </p>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
                       {sdgs.map((sdg: any, i: number) => {
-                        let filename: string | null = null;
-                        if (typeof sdg === "string") {
-                          filename = sdg;
-                        } else if (typeof sdg === "object" && sdg !== null) {
-                          filename = sdg.content_url || sdg.name || null;
-                        }
-                        if (!filename) return null;
-                        if (!filename.includes(".png") && !filename.includes(".jpg") && !filename.includes(".jpeg")) {
-                          filename = `${filename}.png`;
-                        }
-                        const imagePath = `/sdg_pngs/${filename}`;
+                        const SDG_NAME_TO_NUMBER: Record<string, number> = {
+                          "No Poverty": 1,
+                          "Zero Hunger": 2,
+                          "Good Health and Well-Being": 3,
+                          "Quality Education": 4,
+                          "Gender Equality": 5,
+                          "Clean Water and Sanitation": 6,
+                          "Affordable and Clean Energy": 7,
+                          "Decent Work and Economic Growth": 8,
+                          "Industry, Innovation, and Infrastructure": 9,
+                          "Reduced Inequalities": 10,
+                          "Sustainable Cities and Communities": 11,
+                          "Responsible Consumption and Production": 12,
+                          "Climate Action": 13,
+                          "Life Below Water": 14,
+                          "Life on Land": 15,
+                          "Peace, Justice, and Strong Institutions": 16,
+                          "Partnerships for the Goals": 17,
+                        };
+                        const name = typeof sdg === "string" ? sdg : (sdg?.name || sdg?.content_url || "");
+                        const num = SDG_NAME_TO_NUMBER[name];
+                        if (!num) return null;
+                        const imagePath = `/SDG_pngs/E-WEB-Goal-${String(num).padStart(2, "0")}.png`;
                         return (
                           <img
                             key={i}
                             src={imagePath}
-                            alt={`SDG ${filename}`}
-                            title={`SDG ${filename}`}
+                            alt={name}
+                            title={name}
                             style={{ width: 80, height: 80, objectFit: "contain", borderRadius: 4, boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               const div = document.createElement("div");
                               div.style.cssText = "padding: 8px 12px; background: #f5f5f5; border-radius: 4px; font-family: Onest, sans-serif; font-size: 12px; color: #002147; border: 1px solid #ddd;";
-                              div.textContent = filename;
+                              div.textContent = name;
                               target.parentNode?.replaceChild(div, target);
                             }}
                           />
