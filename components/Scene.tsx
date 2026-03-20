@@ -12,6 +12,35 @@ function Loader() {
     return <Html center>{progress.toFixed(1)}%</Html>;
 }
 
+const ZOOM_START = 0.75;
+const ZOOM_TARGET = 1.5;
+const ZOOM_EASE = 0.03; // lower = slower ease
+
+function ZoomIntro() {
+    const { camera } = useThree();
+    const done = useRef(false);
+
+    useEffect(() => {
+        camera.zoom = ZOOM_START;
+        camera.updateProjectionMatrix();
+    }, [camera]);
+
+    useFrame(() => {
+        if (done.current) return;
+        const diff = ZOOM_TARGET - camera.zoom;
+        if (Math.abs(diff) < 0.001) {
+            camera.zoom = ZOOM_TARGET;
+            camera.updateProjectionMatrix();
+            done.current = true;
+            return;
+        }
+        camera.zoom += diff * ZOOM_EASE;
+        camera.updateProjectionMatrix();
+    });
+
+    return null;
+}
+
 // Smoothly animates the OrbitControls target (and camera) toward a building's
 // actual world position, looked up directly from the scene graph.
 function CameraAnimator({
@@ -145,7 +174,7 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
                     rotation={[-Math.PI / 4, Math.PI / 4, 0]}
                     zoom={1.5}
                     top={350}
-                    bottom={-350}
+                    bottom={-150}
                     near={0.4}
                     far={10000}
                 />
@@ -185,11 +214,12 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
                     enableRotate={false}
                     enablePan={false}
                     enableZoom={true}
-                    minZoom={1.25}
+                    minZoom={0.75}
                     maxZoom={2}
                     screenSpacePanning={false}
                 />
 
+                <ZoomIntro />
                 <CameraAnimator
                     targetBuilding={cameraTargetBuilding ?? null}
                     controlsRef={controlsRef}
