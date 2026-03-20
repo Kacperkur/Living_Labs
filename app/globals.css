@@ -267,6 +267,21 @@ h1, h2 {
 .nav-links h2 {
   margin: 0;
   white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.nav-links h2:hover,
+.nav-links a:hover h2 {
+  color: var(--primary-clr-300);
+}
+
+.logo-section:hover .header-title {
+  color: var(--primary-clr-300);
+}
+
+.header-title {
+  transition: color 0.2s ease;
 }
 
 @media (max-width: 768px) {

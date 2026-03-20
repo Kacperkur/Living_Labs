@@ -33,7 +33,7 @@ export default function OurLabsPage() {
           </Link>
           <div className="nav-links">
             <Link href="/our-labs" style={{ textDecoration: 'none' }}>
-              <h2 style={{ color: 'var(--primary-clr-300)' }}>Our Labs</h2>
+              <h2>Our Labs</h2>
             </Link>
             <h2>Join</h2>
           </div>
