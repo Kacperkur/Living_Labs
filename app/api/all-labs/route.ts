@@ -4,7 +4,7 @@ import { Firestore } from 'firebase-admin/firestore';
 
 let db: Firestore | null = null;
 
-function formatDoc(id: string, data: FirebaseFirestore.DocumentData) {
+function formatDoc(id: string, data: FirebaseFirestore.DocumentData, mediaCounts: Record<string, number>) {
   const toISO = (ts: any) => {
     if (!ts) return null;
     if (typeof ts.toDate === 'function') return ts.toDate().toISOString();
@@ -13,11 +13,12 @@ function formatDoc(id: string, data: FirebaseFirestore.DocumentData) {
   return {
     id,
     name: data.lab_name ?? data.name ?? null,
-    location: data.Location ?? null,
+    building: data.Location ?? null,
     biography: data.biography ?? null,
     start_date: toISO(data.start_date),
     end_date: toISO(data.end_date),
     SDGs: Array.isArray(data.SDGs) ? data.SDGs : [],
+    media_count: mediaCounts[id] ?? 0,
   };
 }
 
@@ -31,18 +32,31 @@ export async function GET(req: Request) {
       db = admin.firestore();
     }
 
-    // Single lab by ID
+    // Single lab by ID — no media_count needed here
     if (id) {
       const doc = await db.collection('labs').doc(id).get();
       if (!doc.exists) {
         return NextResponse.json({ error: 'Lab not found' }, { status: 404 });
       }
-      return NextResponse.json({ lab: formatDoc(doc.id, doc.data()!) });
+      return NextResponse.json({ lab: formatDoc(doc.id, doc.data()!, {}) });
     }
 
-    const snapshot = await db.collection('labs').orderBy('lab_name').get();
+    // Fetch all labs and media lab_id fields in parallel
+    const [snapshot, mediaSnap] = await Promise.all([
+      db.collection('labs').orderBy('lab_name').get(),
+      db.collection('media').select('lab_id').get(),
+    ]);
 
-    const labs = snapshot.docs.map(doc => formatDoc(doc.id, doc.data()));
+    // Count media per lab_id in one pass
+    const mediaCounts: Record<string, number> = {};
+    mediaSnap.docs.forEach(doc => {
+      const labId = doc.data().lab_id;
+      if (typeof labId === 'string' && labId) {
+        mediaCounts[labId] = (mediaCounts[labId] ?? 0) + 1;
+      }
+    });
+
+    const labs = snapshot.docs.map(doc => formatDoc(doc.id, doc.data(), mediaCounts));
 
     return NextResponse.json({ labs });
   } catch (error) {
