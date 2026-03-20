@@ -1,27 +1,30 @@
 import { NextResponse } from 'next/server';
 import { getAdmin } from '../../../firebase-config';
 import { Firestore, Timestamp } from 'firebase-admin/firestore';
+import { Pinecone } from '@pinecone-database/pinecone';
 
 /**
  * POST /api/ingest-media
  *
- * Accepts a CSV body (Content-Type: text/csv) and creates documents in the
- * Firestore "media" collection.
+ * Accepts a CSV body (Content-Type: text/csv), creates documents in the
+ * Firestore "media" collection, and upserts each record to Pinecone for
+ * semantic search.
  *
  * CSV column order:
- *   id, title, authors, content_url, lab_id, lab_name, published
+ *   id, title, authors, description, content_url, lab_id, lab_name, published
  *
  * Notes:
  *   - "id" is optional — leave blank to auto-generate a Firestore document ID.
  *   - "authors" accepts pipe-separated names, e.g. "Jane Doe|John Smith"
- *   - "published" should be YYYY-MM-DD (e.g. 2023-06-15). Blank = null.
- *
- * Example CSV:
- *   id,title,authors,content_url,lab_id,lab_name,published
- *   ,Path planning algorithms,"Jane Doe|John Smith",https://example.com/paper.pdf,lab123,Autonomous Systems Lab,2023-06-15
+ *   - "description" is embedded as the searchable text in Pinecone
+ *   - "published" should be YYYY-MM-DD. Blank = null.
  */
 
 let db: Firestore | null = null;
+
+const apiKey = process.env.PINECONE_API_KEY;
+const pc = new Pinecone({ apiKey: apiKey as string });
+const index = pc.index('livinglabsdemo').namespace('media');
 
 // ── CSV parser ────────────────────────────────────────────────────────────────
 
@@ -64,8 +67,7 @@ function toTimestamp(value: string): Timestamp | null {
   return isNaN(d.getTime()) ? null : Timestamp.fromDate(d);
 }
 
-function toAuthors(value: string): string {
-  // Store as a joined string for compatibility with existing author field
+function toAuthorString(value: string): string {
   if (!value) return '';
   return value.split('|').map(s => s.trim()).filter(Boolean).join(', ');
 }
@@ -92,21 +94,26 @@ export async function POST(req: Request) {
     }
 
     const collection = db.collection('media');
-    const results: { id: string; status: 'created' | 'updated' }[] = [];
+    const results: { id: string; status: 'created' | 'updated'; pineconeWarning?: string }[] = [];
     const errors: { row: number; error: string }[] = [];
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       try {
+        const authorString = toAuthorString(row.authors);
+        const description = row.description?.trim() || null;
+
         const docData: Record<string, unknown> = {
-          title: row.title || null,
-          author: toAuthors(row.authors) || null,
+          title:       row.title       || null,
+          author:      authorString    || null,
+          description: description,
           content_url: row.content_url || null,
-          lab_id: row.lab_id || null,
-          lab_name: row.lab_name || null,
-          published: toTimestamp(row.published),
+          lab_id:      row.lab_id      || null,
+          lab_name:    row.lab_name    || null,
+          published:   toTimestamp(row.published),
         };
 
+        // 1. Write to Firestore
         let docRef;
         let status: 'created' | 'updated';
 
@@ -120,7 +127,39 @@ export async function POST(req: Request) {
           status = 'created';
         }
 
-        results.push({ id: docRef.id, status });
+        // 2. Upsert to Pinecone — only if description is present
+        let pineconeWarning: string | undefined;
+        if (!apiKey) {
+          pineconeWarning = 'Pinecone API key missing — skipped';
+        } else if (!description) {
+          pineconeWarning = 'No description — Pinecone upsert skipped';
+        } else {
+          try {
+            const textParts = [
+              `Title: ${row.title.trim()}`,
+              authorString           ? `Authors: ${authorString}`          : null,
+              row.lab_name?.trim()   ? `Lab: ${row.lab_name.trim()}`       : null,
+              row.published          ? `Published: ${row.published}`        : null,
+              `\n${description}`,
+            ].filter(Boolean).join('\n');
+
+            await index.upsertRecords([{
+              id:          docRef.id,
+              text:        textParts,
+              title:       row.title.trim(),
+              author:      authorString || '',
+              lab_id:      row.lab_id?.trim()   || '',
+              lab_name:    row.lab_name?.trim()  || '',
+              content_url: row.content_url?.trim() || '',
+              published:   row.published || '',
+            }]);
+          } catch (err) {
+            pineconeWarning = err instanceof Error ? err.message : 'Pinecone upsert failed';
+            console.error(`⚠️ ingest-media: Pinecone error row ${i + 2}:`, pineconeWarning);
+          }
+        }
+
+        results.push({ id: docRef.id, status, ...(pineconeWarning ? { pineconeWarning } : {}) });
       } catch (err) {
         errors.push({ row: i + 2, error: err instanceof Error ? err.message : String(err) });
       }
