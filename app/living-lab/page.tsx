@@ -115,7 +115,7 @@ export default function LivingLabPage() {
             <SearchBar onResults={handleSearchResults} />
           </div>
           <div className="nav-links">
-            <h2>Our Labs</h2>
+            <a href="/our-labs" style={{ textDecoration: 'none' }}><h2>Our Labs</h2></a>
             <h2>Join</h2>
           </div>
         </div>
