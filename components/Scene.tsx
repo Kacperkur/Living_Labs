@@ -23,19 +23,22 @@ function CameraAnimator({
 }) {
     const { scene } = useThree();
     const destination = useRef<THREE.Vector3 | null>(null);
-
-    useEffect(() => {
-        if (!targetBuilding) { destination.current = null; return; }
-        const obj = scene.getObjectByName(targetBuilding);
-        if (obj) {
-            const worldPos = new THREE.Vector3();
-            obj.getWorldPosition(worldPos);
-            worldPos.y = 0;
-            destination.current = worldPos;
-        }
-    }, [targetBuilding, scene]);
+    const resolved = useRef<string | null>(null);
 
     useFrame(() => {
+        // Retry lookup every frame until the object appears in the scene.
+        // This handles the case where targetBuilding is set before the model loads.
+        if (targetBuilding && resolved.current !== targetBuilding) {
+            const obj = scene.getObjectByName(targetBuilding);
+            if (obj) {
+                const worldPos = new THREE.Vector3();
+                obj.getWorldPosition(worldPos);
+                worldPos.y = 0;
+                destination.current = worldPos;
+                resolved.current = targetBuilding;
+            }
+        }
+
         if (!destination.current || !controlsRef.current) return;
         const controls = controlsRef.current;
         const dist = controls.target.distanceTo(destination.current);
@@ -45,6 +48,13 @@ function CameraAnimator({
         controls.object.position.add(step);
         controls.update();
     });
+
+    // Reset resolved ref when target changes so the lookup runs again.
+    useEffect(() => {
+        if (resolved.current !== targetBuilding) {
+            destination.current = null;
+        }
+    }, [targetBuilding]);
 
     return null;
 }
@@ -133,9 +143,10 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
                     makeDefault
                     position={[300, 200, -200]}
                     rotation={[-Math.PI / 4, Math.PI / 4, 0]}
-                    zoom={1.5}                                                                                                                                                    top={600}
-                    bottom={100}                                                                                                                                                        
-                    near={0.4}  
+                    zoom={1.5}
+                    top={350}
+                    bottom={-350}
+                    near={0.4}
                     far={10000}
                 />
                 <directionalLight
