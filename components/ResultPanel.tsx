@@ -269,14 +269,14 @@ export default function ResultPanel({ result, selectedId, onSelect }: ResultPane
     );
   }
 
-  // No-preview variant: centered, narrower card with vertically centered title/authors
+  // No-preview variant: same full-width layout as the preview variant
   return (
-    <div 
-      style={{ 
-        width: '100vw', 
-        boxSizing: 'border-box', 
-        padding: 16, 
-        background: isSelected ? 'rgba(117, 178, 221, 0.15)' : 'var(--background-clr-400)', 
+    <div
+      style={{
+        width: '100vw',
+        boxSizing: 'border-box',
+        padding: 16,
+        background: isSelected ? 'rgba(117, 178, 221, 0.15)' : 'var(--background-clr-400)',
         borderBottom: '1px solid #eee',
         cursor: 'pointer',
         borderLeft: isSelected ? '4px solid var(--primary-clr-300)' : '4px solid transparent',
@@ -289,31 +289,28 @@ export default function ResultPanel({ result, selectedId, onSelect }: ResultPane
         }
       }}
     >
-      <div style={{ maxWidth: 780, margin: '0 auto', background: 'var(--background-clr-400)', border: '1px solid #e6e6e6', borderRadius: 8, padding: 20, display: 'flex', alignItems: 'center', minHeight: 120 }}>
-        <div style={{ width: '100%' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 24, fontWeight: 700, marginBottom: 8, color: 'var(--tertiary-clr-100)' }}>{title}</div>
-            <div style={{ textAlign: 'right' }}>
-              {safeResult?.path && typeof safeResult.path === 'string' && (
-                <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 11, color: 'var(--tertiary-clr-100)', maxWidth: 360, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{safeResult.path}</div>
-              )}
-            </div>
+      <div style={{ flex: 1, textAlign: 'left' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 24, fontWeight: 700, marginBottom: 6, color: 'var(--tertiary-clr-100)' }}>{title}</div>
+          <div style={{ textAlign: 'right' }}>
+            {safeResult?.path && typeof safeResult.path === 'string' && (
+              <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 11, color: 'var(--tertiary-clr-100)', maxWidth: 360, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{safeResult.path}</div>
+            )}
           </div>
-          <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 8, color: 'var(--tertiary-clr-100)' }}>{authors}</div>
-          <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 12, color: 'var(--tertiary-clr-100)', marginTop: 6 }}>
-            {labName ? (
-              <span>Lab: {labName}</span>
-            ) : labId ? (
-              <span>Lab ID: {labId}</span>
-            ) : null}
-          </div>
-          {/* Published Date */}
-          {published && (
-            <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 12, color: 'var(--tertiary-clr-100)', marginTop: 2 }}>
-              Published: {published}
-            </div>
-          )}
         </div>
+        <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 12, color: 'var(--tertiary-clr-100)', marginBottom: 8 }}>{authors}</div>
+        <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 12, color: 'var(--tertiary-clr-100)', marginTop: 4 }}>
+          {labName ? (
+            <span>Lab: {labName}</span>
+          ) : labId ? (
+            <span>Lab ID: {labId}</span>
+          ) : null}
+        </div>
+        {published && (
+          <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 12, color: 'var(--tertiary-clr-100)', marginTop: 2 }}>
+            Published: {published}
+          </div>
+        )}
       </div>
     </div>
   );
