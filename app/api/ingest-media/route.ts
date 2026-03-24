@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAdmin } from '../../../firebase-config';
-import { Firestore, Timestamp } from 'firebase-admin/firestore';
+import { db } from '../../../lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 import { Pinecone } from '@pinecone-database/pinecone';
 
 /**
@@ -19,8 +19,6 @@ import { Pinecone } from '@pinecone-database/pinecone';
  *   - "description" is embedded as the searchable text in Pinecone
  *   - "published" should be YYYY-MM-DD. Blank = null.
  */
-
-let db: Firestore | null = null;
 
 const apiKey = process.env.PINECONE_API_KEY;
 const pc = new Pinecone({ apiKey: apiKey as string });
@@ -86,11 +84,6 @@ export async function POST(req: Request) {
 
     if (rows.length === 0) {
       return NextResponse.json({ error: 'CSV is empty or missing header row' }, { status: 400 });
-    }
-
-    if (!db) {
-      const admin = await getAdmin();
-      db = admin.firestore();
     }
 
     const collection = db.collection('media');

@@ -1,15 +1,8 @@
 import { NextResponse } from 'next/server';
-// Use the server-side initialized admin SDK exported from the project's firebase-config
-import { getAdmin } from '../../../firebase-config';
-let db: any = null;
+import { db } from '../../../lib/firebase-admin';
 
 export async function GET() {
   try {
-    if (!db) {
-      const admin = await getAdmin();
-      db = admin.firestore();
-    }
-
     const docRef = db.collection('labs').doc('dStVdVkqc86qnhdZTzAw');
     const docSnap = await docRef.get();
 

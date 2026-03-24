@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAdmin } from '../../../firebase-config';
+import { storage } from '../../../lib/firebase-admin';
 
 /**
  * Deletes a file from Firebase Storage by its storage path.
@@ -12,8 +12,7 @@ import { getAdmin } from '../../../firebase-config';
  */
 
 async function deleteFile(path: string) {
-  const admin = await getAdmin();
-  const bucket = admin.storage().bucket();
+  const bucket = storage.bucket();
   await bucket.file(path).delete();
   console.log(`🗑️ delete-upload: removed ${path}`);
 }

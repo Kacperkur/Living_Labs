@@ -1,8 +1,5 @@
-import { getAdmin } from '../../../firebase-config';
+import { db } from '../../../lib/firebase-admin';
 import { NextResponse } from 'next/server';
-import { Firestore } from 'firebase-admin/firestore';
-
-let db: Firestore | null = null;
 
 /**
  * GET /api/labs-by-building?building=Chemical+Engineering
@@ -17,10 +14,6 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Missing 'building' query param" }, { status: 400 });
     }
 
-    if (!db) {
-      const admin = await getAdmin();
-      db = admin.firestore();
-    }
 
     // Debug mode: pass ?debug=true to see all labs and their raw fields
     const debug = searchParams.get('debug') === 'true';

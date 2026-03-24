@@ -1,6 +1,7 @@
 import { Pinecone } from '@pinecone-database/pinecone';
 import { NextResponse } from 'next/server';
-import { Timestamp, Firestore } from 'firebase-admin/firestore';
+import { Timestamp } from 'firebase-admin/firestore';
+import { db } from '../../../lib/firebase-admin';
 import {
   SearchRequest,
   SearchResponse,
@@ -14,11 +15,6 @@ if (!apiKey) console.warn("⚠️ Missing PINECONE_API_KEY environment variable"
 const pc = new Pinecone({ apiKey: apiKey as string });
 const index = pc.index("livinglabsdemo").namespace("media");
 
-// Module-level db — firebase-config.js calls initializeApp() at load time so
-// admin.firestore() is safe to call here without any async work.
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const adminModule = require('../../../firebase-config');
-const db: Firestore = adminModule.firestore();
 
 const DEFAULT_MIN_SCORE = 0.1;
 const DEFAULT_PAGE_SIZE = 20;

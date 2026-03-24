@@ -51,6 +51,25 @@ h1, h2 {
   color: var(--tertiary-clr-100);
 }
 
+/* Spinner rotation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Skeleton shimmer loading animation */
+@keyframes shimmer {
+  0% { background-position: -600px 0; }
+  100% { background-position: 600px 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #e0e0e0 25%, #eeeeee 50%, #e0e0e0 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 4px;
+}
+
 /* Three-window styles (added by assistant) */
 .three-window {
   position: fixed;
@@ -332,7 +351,7 @@ h1, h2 {
 }
 
 .search-bar-icon {
-  height: 32px;
+  height: 20px;
   width: 20px;
   object-fit: contain;
   flex-shrink: 0;

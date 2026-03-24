@@ -116,7 +116,7 @@ export default function LivingLabPage() {
           </div>
           <div className="nav-links">
             <a href="/our-labs" style={{ textDecoration: 'none' }}><h2>Our Labs</h2></a>
-            <h2>Join</h2>
+            <a href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></a>
           </div>
         </div>
       </header>
@@ -124,8 +124,54 @@ export default function LivingLabPage() {
       {/* Page Content */}
       <div style={{ flex: 1, overflowY: "auto", backgroundColor: "#fff" }}>
         {isLoading ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontFamily: "Onest, sans-serif", fontSize: 18, color: "#666" }}>
-            Loading lab information...
+          <div style={{ padding: "30px" }}>
+            {/* Hero row: image + info */}
+            <div style={{ display: "flex", gap: 30, alignItems: "flex-start" }}>
+              <div className="skeleton-shimmer" style={{ width: 598, height: 350, flexShrink: 0, borderRadius: 6 }} />
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 14, paddingTop: 8 }}>
+                <div className="skeleton-shimmer" style={{ height: 52, width: "75%" }} />
+                <div className="skeleton-shimmer" style={{ height: 28, width: "50%" }} />
+                <div className="skeleton-shimmer" style={{ height: 22, width: "40%" }} />
+                <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+                  {[0, 1, 2].map(i => <div key={i} className="skeleton-shimmer" style={{ width: 80, height: 80, borderRadius: 4 }} />)}
+                </div>
+              </div>
+            </div>
+            {/* Synopsis */}
+            <div style={{ padding: "24px 0 8px" }}>
+              <div className="skeleton-shimmer" style={{ height: 36, width: 140, marginBottom: 12 }} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div className="skeleton-shimmer" style={{ height: 22, width: "100%" }} />
+                <div className="skeleton-shimmer" style={{ height: 22, width: "95%" }} />
+                <div className="skeleton-shimmer" style={{ height: 22, width: "80%" }} />
+              </div>
+            </div>
+            {/* Members */}
+            <div style={{ marginTop: 24 }}>
+              <div className="skeleton-shimmer" style={{ height: 36, width: 120, margin: "0 auto 16px" }} />
+              <div style={{ display: "flex", gap: 24, justifyContent: "center" }}>
+                {[0, 1, 2, 3].map(i => (
+                  <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                    <div className="skeleton-shimmer" style={{ width: 80, height: 80, borderRadius: "50%" }} />
+                    <div className="skeleton-shimmer" style={{ height: 14, width: 70 }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Media */}
+            <div style={{ marginTop: 32 }}>
+              <div className="skeleton-shimmer" style={{ height: 36, width: 180, margin: "0 auto 16px" }} />
+              {[0, 1, 2].map(i => (
+                <div key={i} style={{ display: "flex", gap: 16, padding: 16, background: "var(--background-clr-400)", borderBottom: "1px solid #eee", marginBottom: 8 }}>
+                  <div className="skeleton-shimmer" style={{ width: 160, height: 100, flexShrink: 0, borderRadius: 6 }} />
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
+                    <div className="skeleton-shimmer" style={{ height: 24, width: "60%" }} />
+                    <div className="skeleton-shimmer" style={{ height: 14, width: "40%" }} />
+                    <div className="skeleton-shimmer" style={{ height: 14, width: "30%" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : error ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", fontFamily: "Onest, sans-serif", fontSize: 18, color: "#d32f2f", gap: 8 }}>

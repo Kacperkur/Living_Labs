@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Quantico } from 'next/font/google';
 import { Onest } from 'next/font/google';
+import { AuthProvider } from '@/lib/auth-context';
 
 const quantico = Quantico({
   subsets: ['latin'],
@@ -44,7 +45,7 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen overflow-hidden`}
       >
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

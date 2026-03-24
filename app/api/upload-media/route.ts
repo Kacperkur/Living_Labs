@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAdmin } from '../../../firebase-config';
+import { storage } from '../../../lib/firebase-admin';
 
 const ACCEPTED_MIME_TYPES: Record<string, string> = {
   'application/pdf': 'pdf',
@@ -49,8 +49,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'File exceeds 100 MB limit' }, { status: 413 });
     }
 
-    const admin = await getAdmin();
-    const bucket = admin.storage().bucket();
+    const bucket = storage.bucket();
 
     // Build a clean storage path: labs/{labId}/{timestamp}_{sanitised_filename}
     const timestamp = Date.now();

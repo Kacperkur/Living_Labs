@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server';
-import { Firestore } from 'firebase-admin/firestore';
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const adminModule = require('../../../firebase-config');
-const db: Firestore = adminModule.firestore();
+import { db } from '../../../lib/firebase-admin';
 
 // ─── Cache ────────────────────────────────────────────────────────────────────
 // Media lists don't change often — 5 minutes is safe.

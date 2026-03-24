@@ -17,6 +17,7 @@ export default function Home() {
   const searchParams = useSearchParams();
   const searchBarRef = useRef<SearchBarHandle | null>(null);
   const [results, setResults] = useState<SearchResult[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [currentQuery, setCurrentQuery] = useState('');
@@ -105,7 +106,7 @@ export default function Home() {
 
           {/* Center: Search bar - wraps to next line on smaller screens */}
           <div className="search-bar-wrapper">
-            <SearchBar ref={searchBarRef} onResults={(matches, query, more) => {
+            <SearchBar ref={searchBarRef} onLoadingChange={setIsSearching} onResults={(matches, query, more) => {
               setResults(matches);
               setCurrentQuery(query);
               setHasMore(more);
@@ -117,7 +118,7 @@ export default function Home() {
           {/* Right side: two H2s */}
           <div className="nav-links">
             <a href="/our-labs" style={{ textDecoration: 'none' }}><h2>Our Labs</h2></a>
-            <h2>Join</h2>
+            <a href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></a>
           </div>
         </div>
       </header>
@@ -146,10 +147,10 @@ export default function Home() {
           </div>
 
           {/* Results at bottom - shows all or just selected one */}
-          {results && results.length > 0 && (
-            <div style={{ 
-              width: '100%', 
-              boxSizing: 'border-box', 
+          {(isSearching || (results && results.length > 0)) && (
+            <div style={{
+              width: '100%',
+              boxSizing: 'border-box',
               padding: selectedLabId ? '0' : '24px',
               backgroundColor: 'var(--background-clr-400)',
               boxShadow: '0 -4px 6px -1px rgba(0, 0, 0, 0.1), 0 -2px 4px -1px rgba(0, 0, 0, 0.06)',
@@ -159,17 +160,30 @@ export default function Home() {
               transition: 'padding 0.3s ease'
             }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: selectedLabId ? 0 : 8 }}>
-                {results
-                  .filter((r) => r && typeof r === 'object')
-                  .filter((r) => !selectedLabId || r.id === selectedLabId)
-                  .map((r, i) => {
-                    const key = r.id || `result-${i}`;
-                    return <ResultPanel key={key} result={r} selectedId={selectedLabId} onSelect={handleMediaSelect} />;
-                  })}
+                {isSearching ? (
+                  [0, 1, 2].map(i => (
+                    <div key={i} style={{ display: 'flex', gap: 16, padding: 16, background: 'var(--background-clr-400)', borderBottom: '1px solid #eee' }}>
+                      <div className="skeleton-shimmer" style={{ width: 160, height: 100, flexShrink: 0, borderRadius: 6 }} />
+                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div className="skeleton-shimmer" style={{ height: 24, width: '60%' }} />
+                        <div className="skeleton-shimmer" style={{ height: 14, width: '40%' }} />
+                        <div className="skeleton-shimmer" style={{ height: 14, width: '30%' }} />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  results!
+                    .filter((r) => r && typeof r === 'object')
+                    .filter((r) => !selectedLabId || r.id === selectedLabId)
+                    .map((r, i) => {
+                      const key = r.id || `result-${i}`;
+                      return <ResultPanel key={key} result={r} selectedId={selectedLabId} onSelect={handleMediaSelect} />;
+                    })
+                )}
               </div>
 
               {/* Load more button — only shown when there are more results and no item is selected */}
-              {hasMore && !selectedLabId && (
+              {hasMore && !selectedLabId && !isSearching && (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0 8px' }}>
                   <button
                     onClick={loadMore}

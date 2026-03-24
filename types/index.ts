@@ -125,6 +125,7 @@ export interface ApiErrorResponse {
  */
 export interface SearchBarProps {
   onResults?: (matches: SearchResult[], query: string, hasMore: boolean) => void;
+  onLoadingChange?: (loading: boolean) => void;
 }
 
 /**

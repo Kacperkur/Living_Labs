@@ -107,12 +107,7 @@ export function Model({ onBuildingClick, ...props }) {
         <BuildingLabel name="Green Hall" />
       </group>
 
-      <group name="Crawford Hall" position={[16.056, 0, -558.227]} {...click('Crawford Hall')}>
-        <mesh geometry={nodes.Chemical_Engineering.geometry} material={bld} rotation={[0, Math.PI / 2, 0]} scale={[15.411, 30.646, 45.565]} castShadow />
-        <BuildingLabel name="Crawford Hall" yOffset={45} />
-      </group>
-
-      <group name="Quinn Hall" position={[-237.922, 0, 405.745]} {...click('Quinn Hall')}>
+<group name="Quinn Hall" position={[-237.922, 0, 405.745]} {...click('Quinn Hall')}>
         <mesh geometry={nodes.Quinn_Hall.geometry} material={bld} rotation={[Math.PI, -0.003, 0]} scale={[-16.606, -47.555, -47.684]} castShadow />
         <BuildingLabel name="Quinn Hall" yOffset={58} />
       </group>
@@ -124,7 +119,7 @@ export function Model({ onBuildingClick, ...props }) {
 
       <group name="Robert L Carothers Library & Learning Commons" position={[-278.744, 0, -481.486]} {...click('Robert L Carothers Library & Learning Commons')}>
         <mesh geometry={nodes['Robert_L_Carothers_Library_&_Learning_Commons'].geometry} material={bld} rotation={[0, -0.062, -Math.PI]} scale={[-92.078, -37.507, -59.402]} castShadow />
-        <BuildingLabel name="Library" yOffset={48} />
+        <BuildingLabel name="Robert L. Carothers Library & Learning Commons" yOffset={48} />
       </group>
 
       <group name="Chafee Social Science Center" position={[-250.674, 0.863, -938.954]} {...click('Chafee Social Science Center')}>

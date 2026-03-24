@@ -3,13 +3,24 @@ const admin = require('firebase-admin');
 // Protect against initializeApp being called multiple times during dev (HMR/TurboPack)
 // by re-using the already-initialized app when available.
 if (!admin.apps || admin.apps.length === 0) {
-  // Load service account only when we need to initialize (avoid requiring secrets unnecessarily)
-  const serviceAccount = require('./livinglabs-1a831-firebase-adminsdk-fbsvc-0fafb06513.json'); // Adjust path as needed
+  const storageBucket = process.env.FIREBASE_STORAGE_BUCKET || 'livinglabs-1a831.firebasestorage.app';
 
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'livinglabs-1a831.firebasestorage.app',
-  });
+  // In production (Firebase App Hosting / Cloud Run), Application Default Credentials
+  // are available automatically — no service account JSON needed.
+  // Locally, set GOOGLE_APPLICATION_CREDENTIALS or use the JSON path below.
+  const serviceAccountPath = process.env.LIVINGLABS_ADMINSDK_PATH;
+
+  if (serviceAccountPath) {
+    const serviceAccount = require(serviceAccountPath);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      storageBucket,
+    });
+  } else {
+    admin.initializeApp({
+      storageBucket,
+    });
+  }
 } else {
   // admin already initialized in this process — reuse it
   // (This avoids the "Firebase app named \"[DEFAULT]\" already exists" error.)

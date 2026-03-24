@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAdmin } from '../../../firebase-config';
-import { Firestore } from 'firebase-admin/firestore';
-
-let db: Firestore | null = null;
+import { db } from '../../../lib/firebase-admin';
 
 function formatDoc(id: string, data: FirebaseFirestore.DocumentData, mediaCounts: Record<string, number>) {
   const toISO = (ts: any) => {
@@ -27,10 +24,6 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
-    if (!db) {
-      const admin = await getAdmin();
-      db = admin.firestore();
-    }
 
     // Single lab by ID — no media_count needed here
     if (id) {

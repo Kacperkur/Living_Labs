@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAdmin } from '../../../firebase-config';
-import { Firestore } from 'firebase-admin/firestore';
-
-let db: Firestore | null = null;
+import { db } from '../../../lib/firebase-admin';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -56,10 +53,6 @@ export async function GET(req: Request) {
       return NextResponse.json(cached);
     }
 
-    if (!db) {
-      const admin = await getAdmin();
-      db = admin.firestore();
-    }
 
     const snap = await db.collection('labs').doc(labId).get();
 

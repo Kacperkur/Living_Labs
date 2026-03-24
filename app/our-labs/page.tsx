@@ -35,7 +35,7 @@ export default function OurLabsPage() {
             <Link href="/our-labs" style={{ textDecoration: 'none' }}>
               <h2>Our Labs</h2>
             </Link>
-            <h2>Join</h2>
+            <a href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></a>
           </div>
         </div>
       </header>
@@ -50,8 +50,21 @@ export default function OurLabsPage() {
         </p>
 
         {loading && (
-          <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 16, color: '#6b7e96', textAlign: 'center', marginTop: 80 }}>
-            Loading labs…
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 28, justifyContent: 'center' }}>
+            {[0, 1, 2, 3, 4, 5, 6, 7].map(i => (
+              <div key={i} style={{ width: 280, height: 360, borderRadius: 12, overflow: 'hidden', flexShrink: 0, display: 'flex', flexDirection: 'column' }}>
+                <div className="skeleton-shimmer" style={{ width: '100%', height: 200, borderRadius: 0 }} />
+                <div style={{ flex: 1, padding: '16px 16px 12px', display: 'flex', flexDirection: 'column', gap: 10, background: '#fff' }}>
+                  <div className="skeleton-shimmer" style={{ height: 20, width: '75%' }} />
+                  <div className="skeleton-shimmer" style={{ height: 14, width: '55%' }} />
+                  <div className="skeleton-shimmer" style={{ height: 13, width: '90%' }} />
+                  <div className="skeleton-shimmer" style={{ height: 13, width: '70%' }} />
+                  <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
+                    {[0, 1, 2].map(j => <div key={j} className="skeleton-shimmer" style={{ width: 32, height: 32, borderRadius: 4 }} />)}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 

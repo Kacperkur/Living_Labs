@@ -3,13 +3,18 @@
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { SearchBarProps, SearchBarHandle, SearchResult, SearchResponse, toSearchResponse } from '../types';
 
-const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onResults }, ref) => {
+const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onResults, onLoadingChange }, ref) => {
   const [value, setValue] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  function updateLoading(val: boolean) {
+    setLoading(val);
+    onLoadingChange?.(val);
+  }
+
   async function doSearch(q: string): Promise<void> {
-  setLoading(true);
+  updateLoading(true);
   setError(null);
     try {
       // Use the enhanced search route that combines Pinecone + Firebase
@@ -115,7 +120,7 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onResults }, re
       const errorMessage = err instanceof Error ? err.message : String(err);
       setError(errorMessage);
     } finally {
-      setLoading(false);
+      updateLoading(false);
     }
   }
 
@@ -144,22 +149,29 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onResults }, re
           placeholder="Search..."
           className="search-bar-input"
         />
-        <img 
-          src="/loupe.png" 
-          alt="Search" 
+        <button
+          type="button"
+          disabled={loading}
           onClick={() => {
             const q = value.trim();
             if (!q) return;
             doSearch(q);
           }}
           className="search-bar-icon"
-        />
+          style={{ background: 'none', border: 'none', padding: 0, cursor: loading ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          aria-label="Search"
+        >
+          {loading ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 0.75s linear infinite' }}>
+              <circle cx="12" cy="12" r="10" stroke="#75B2DD" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+            </svg>
+          ) : (
+            <img src="/loupe.png" alt="Search" style={{ width: '100%', height: '100%', display: 'block' }} />
+          )}
+        </button>
       </div>
 
-      <div className="mt-2">
-        {loading && <div>Searching...</div>}
-        {error && <div className="text-red-600">Error: {error}</div>}
-      </div>
+      {error && <div className="mt-2 text-red-600">Error: {error}</div>}
     </div>
   );
 });

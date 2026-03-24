@@ -174,7 +174,7 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
                     rotation={[-Math.PI / 4, Math.PI / 4, 0]}
                     zoom={1.5}
                     top={350}
-                    bottom={-150}
+                    bottom={-120}
                     near={0.4}
                     far={10000}
                 />

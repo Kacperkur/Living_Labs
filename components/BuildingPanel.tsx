@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Lab } from '../types';
 
 interface BuildingPanelProps {
@@ -10,9 +10,11 @@ interface BuildingPanelProps {
 }
 
 export default function BuildingPanel({ buildingName, onClose }: BuildingPanelProps) {
+  const router = useRouter();
   const [labs, setLabs] = useState<Lab[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
 
   useEffect(() => {
     if (!buildingName) {
@@ -149,16 +151,13 @@ export default function BuildingPanel({ buildingName, onClose }: BuildingPanelPr
       {/* Body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 12px 20px' }}>
         {loading && (
-          <div style={{
-            fontFamily: 'Onest, sans-serif',
-            fontSize: 14,
-            color: 'var(--tertiary-clr-100)',
-            opacity: 0.5,
-            padding: '24px 8px',
-            textAlign: 'center',
-          }}>
-            Loading…
-          </div>
+          [0, 1, 2].map(i => (
+            <div key={i} style={{ background: '#fff', border: '1px solid #e6e6e6', borderRadius: 8, padding: '14px 16px', marginBottom: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div className="skeleton-shimmer" style={{ height: 18, width: '70%' }} />
+              <div className="skeleton-shimmer" style={{ height: 13, width: '90%' }} />
+              <div className="skeleton-shimmer" style={{ height: 13, width: '75%' }} />
+            </div>
+          ))
         )}
 
         {!loading && error && (
@@ -186,31 +185,56 @@ export default function BuildingPanel({ buildingName, onClose }: BuildingPanelPr
           </div>
         )}
 
-        {!loading && labs.map(lab => (
-          <Link
-            key={lab.id}
-            href={`/living-lab?id=${encodeURIComponent(lab.id)}`}
-            style={{ textDecoration: 'none', display: 'block' }}
-          >
+        {!loading && labs.map(lab => {
+          const isNavigating = navigatingTo === lab.id;
+          const isBlocked = navigatingTo !== null && !isNavigating;
+          return (
             <div
+              key={lab.id}
+              onClick={() => {
+                if (navigatingTo !== null) return;
+                setNavigatingTo(lab.id);
+                router.push(`/living-lab?id=${encodeURIComponent(lab.id)}`);
+              }}
               style={{
+                position: 'relative',
                 background: '#fff',
                 border: '1px solid #e6e6e6',
                 borderRadius: 8,
                 padding: '14px 16px',
                 marginBottom: 10,
-                cursor: 'pointer',
-                transition: 'box-shadow 0.15s ease',
+                cursor: isBlocked ? 'default' : 'pointer',
+                opacity: isBlocked ? 0.5 : 1,
+                transition: 'box-shadow 0.15s ease, opacity 0.15s ease',
               }}
               onMouseEnter={e => {
+                if (navigatingTo !== null) return;
                 e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                (e.currentTarget.firstChild as HTMLElement).style.color = 'var(--primary-clr-300)';
+                (e.currentTarget.children[0] as HTMLElement).style.color = 'var(--primary-clr-300)';
               }}
               onMouseLeave={e => {
                 e.currentTarget.style.boxShadow = 'none';
-                (e.currentTarget.firstChild as HTMLElement).style.color = 'var(--tertiary-clr-100)';
+                (e.currentTarget.children[0] as HTMLElement).style.color = 'var(--tertiary-clr-100)';
               }}
             >
+              {/* Loading overlay for the card being navigated to */}
+              {isNavigating && (
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  borderRadius: 8,
+                  background: 'rgba(255,255,255,0.7)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1,
+                }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 0.75s linear infinite' }}>
+                    <circle cx="12" cy="12" r="10" stroke="var(--primary-clr-300)" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+                  </svg>
+                </div>
+              )}
+
               <div style={{
                 fontFamily: 'Onest, sans-serif',
                 fontSize: 16,
@@ -251,8 +275,8 @@ export default function BuildingPanel({ buildingName, onClose }: BuildingPanelPr
                 </div>
               )}
             </div>
-          </Link>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
-import { getAdmin } from '../../../firebase-config';
-import { Firestore, Timestamp } from 'firebase-admin/firestore';
+import { db } from '../../../lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 import { Pinecone } from '@pinecone-database/pinecone';
-
-let db: Firestore | null = null;
 
 const apiKey = process.env.PINECONE_API_KEY;
 const pc = new Pinecone({ apiKey: apiKey as string });
@@ -37,11 +35,6 @@ export async function POST(req: Request) {
     }
     if (!lab_id?.trim()) {
       return NextResponse.json({ error: 'lab_id is required' }, { status: 400 });
-    }
-
-    if (!db) {
-      const admin = await getAdmin();
-      db = admin.firestore();
     }
 
     const authorString = Array.isArray(authors)

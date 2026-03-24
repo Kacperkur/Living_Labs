@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAdmin } from '../../../firebase-config';
-import { Firestore, Timestamp } from 'firebase-admin/firestore';
+import { db } from '../../../lib/firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 
 /**
  * POST /api/ingest-labs
@@ -20,8 +20,6 @@ import { Firestore, Timestamp } from 'firebase-admin/firestore';
  *   id,lab_name,Location,biography,start_date,end_date,SDGs
  *   ,Autonomous Systems Lab,Crawford Hall,"Research into autonomous systems.",2020-01-01,2025-12-31,"Clean Energy|Good Health"
  */
-
-let db: Firestore | null = null;
 
 // ── CSV parser ────────────────────────────────────────────────────────────────
 
@@ -83,11 +81,6 @@ export async function POST(req: Request) {
 
     if (rows.length === 0) {
       return NextResponse.json({ error: 'CSV is empty or missing header row' }, { status: 400 });
-    }
-
-    if (!db) {
-      const admin = await getAdmin();
-      db = admin.firestore();
     }
 
     const collection = db.collection('labs');
