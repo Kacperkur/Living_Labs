@@ -2,6 +2,8 @@
 
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import Preload from '@/components/Preload';
 import Head from 'next/head';
 import { Scene } from '@/components/Scene';
