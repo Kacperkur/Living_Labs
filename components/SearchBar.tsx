@@ -166,7 +166,7 @@ const SearchBar = forwardRef<SearchBarHandle, SearchBarProps>(({ onResults, onLo
               <circle cx="12" cy="12" r="10" stroke="#75B2DD" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
             </svg>
           ) : (
-            <img src="/loupe.png" alt="Search" style={{ width: '100%', height: '100%', display: 'block' }} />
+            <img src="https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/loupe.png?alt=media" alt="Search" style={{ width: '100%', height: '100%', display: 'block' }} />
           )}
         </button>
       </div>

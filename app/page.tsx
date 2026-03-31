@@ -100,7 +100,7 @@ function HomeContent() {
         <div className="header-top-row">
           {/* Left side: logo and H1 */}
           <a href="/" className="logo-section" style={{ textDecoration: "none", color: "inherit" }}>
-            <img className="header-logo" src="/logo.jpg" alt="Logo" />
+            <img className="header-logo" src="https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/logo.jpg?alt=media" alt="Logo" />
             <h1 className="header-title">Living Labs</h1>
           </a>
 

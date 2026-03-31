@@ -117,7 +117,7 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
             borderRadius: 8
           }}>
             <img
-              src={`/lab_images/${building}.jpg`}
+              src={`https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/${encodeURIComponent(building)}.jpg?alt=media`}
               alt={building}
               style={{
                 width: '100%',

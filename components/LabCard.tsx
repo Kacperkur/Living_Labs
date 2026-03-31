@@ -94,7 +94,7 @@ export default function LabCard({ lab }: { lab: LabCardData }) {
           <div style={{ flex: '0 0 180px', overflow: 'hidden', background: '#c8d6e5', position: 'relative' }}>
             {lab.building ? (
               <img
-                src={`/lab_images/${lab.building}.jpg`}
+                src={`https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/${encodeURIComponent(lab.building)}.jpg?alt=media`}
                 alt={lab.building}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 onError={(e) => {

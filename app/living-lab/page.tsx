@@ -109,7 +109,7 @@ function LivingLabContent() {
       <header className="header-container">
         <div className="header-top-row">
           <a href="/" className="logo-section" style={{ textDecoration: "none", color: "inherit" }}>
-            <img className="header-logo" src="/logo.jpg" alt="Logo" />
+            <img className="header-logo" src="https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/logo.jpg?alt=media" alt="Logo" />
             <h1 className="header-title">Living Labs</h1>
           </a>
           <div className="search-bar-wrapper">
@@ -190,7 +190,7 @@ function LivingLabContent() {
             {/* ── Identification Info ── */}
             <div style={{ display: "flex", gap: 30, alignItems: "flex-start" }}>
               <img
-                src={`/lab_images/${building}.jpg`}
+                src={`https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/${encodeURIComponent(building)}.jpg?alt=media`}
                 alt={lab.lab_name || "Lab"}
                 onError={(e) => { (e.target as HTMLImageElement).style.background = "#c8d8e8"; (e.target as HTMLImageElement).removeAttribute("src"); }}
                 style={{ width: 598, height: 350, objectFit: "cover", flexShrink: 0, backgroundColor: "#c8d8e8" }}
