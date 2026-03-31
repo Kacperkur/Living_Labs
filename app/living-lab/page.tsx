@@ -203,11 +203,11 @@ export default function LivingLabPage() {
                     {lab.metadata.location}
                   </p>
                 )}
-                {lab.start_date && (
+                {lab.metadata?.start_date && (
                   <p style={{ fontFamily: "Onest, sans-serif", fontWeight: 400, fontSize: 24, color: "#000", margin: 0, lineHeight: 1 }}>
-                    {formatDate(lab.start_date)}
-                    {lab.end_date && lab.end_date !== lab.start_date
-                      ? ` – ${formatDate(lab.end_date)}`
+                    {formatDate(lab.metadata.start_date as string)}
+                    {lab.metadata?.end_date && lab.metadata.end_date !== lab.metadata.start_date
+                      ? ` – ${formatDate(lab.metadata.end_date as string)}`
                       : " – Present"}
                   </p>
                 )}
