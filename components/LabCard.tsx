@@ -183,7 +183,7 @@ export default function LabCard({ lab }: { lab: LabCardData }) {
               {sdgNums.map(num => (
                 <img
                   key={num}
-                  src={`/SDG_pngs/E-WEB-Goal-${String(num).padStart(2, '0')}.png`}
+                  src={`https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/E-WEB-Goal-${String(num).padStart(2, '0')}.png?alt=media`}
                   alt={`SDG ${num}`}
                   title={`SDG ${num}`}
                   style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 3 }}

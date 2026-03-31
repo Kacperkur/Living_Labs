@@ -239,7 +239,7 @@ export default function MediaDetailPanel({ selectedMedia, onClose }: MediaDetail
                       console.warn('Unknown SDG name:', name);
                       return null;
                     }
-                    const imagePath = `/SDG_pngs/E-WEB-Goal-${String(num).padStart(2, '0')}.png`;
+                    const imagePath = `https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/E-WEB-Goal-${String(num).padStart(2, '0')}.png?alt=media`;
                     
                     return (
                       <img
