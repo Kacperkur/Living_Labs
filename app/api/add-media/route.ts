@@ -3,9 +3,6 @@ import { db } from '../../../lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
 import { Pinecone } from '@pinecone-database/pinecone';
 
-const apiKey = process.env.PINECONE_API_KEY;
-const pc = new Pinecone({ apiKey: apiKey as string });
-const index = pc.index('livinglabsdemo').namespace('media');
 
 /**
  * POST /api/add-media
@@ -65,7 +62,9 @@ export async function POST(req: Request) {
     //    The `text` field is what Pinecone embeds for semantic search.
     //    All other fields are stored as metadata and returned with search results.
     const pineconeWarning = await (async () => {
+      const apiKey = process.env.PINECONE_API_KEY;
       if (!apiKey) return 'Pinecone API key missing — skipped';
+      const index = new Pinecone({ apiKey }).index('livinglabsdemo').namespace('media');
       const descriptionText = description?.trim();
       if (!descriptionText) return 'No description provided — Pinecone upsert skipped';
 

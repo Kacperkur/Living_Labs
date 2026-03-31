@@ -20,9 +20,6 @@ import { Pinecone } from '@pinecone-database/pinecone';
  *   - "published" should be YYYY-MM-DD. Blank = null.
  */
 
-const apiKey = process.env.PINECONE_API_KEY;
-const pc = new Pinecone({ apiKey: apiKey as string });
-const index = pc.index('livinglabsdemo').namespace('media');
 
 // ── CSV parser ────────────────────────────────────────────────────────────────
 
@@ -73,6 +70,9 @@ function toAuthorString(value: string): string {
 // ── Route ─────────────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  const apiKey = process.env.PINECONE_API_KEY;
+  const index = new Pinecone({ apiKey: apiKey as string }).index('livinglabsdemo').namespace('media');
+
   try {
     const contentType = req.headers.get('content-type') ?? '';
     if (!contentType.includes('text/csv')) {

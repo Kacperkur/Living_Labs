@@ -9,11 +9,6 @@ import {
   PineconeMetadata
 } from '../../../types';
 
-const apiKey = process.env.PINECONE_API_KEY;
-if (!apiKey) console.warn("⚠️ Missing PINECONE_API_KEY environment variable");
-
-const pc = new Pinecone({ apiKey: apiKey as string });
-const index = pc.index("livinglabsdemo").namespace("media");
 
 
 const DEFAULT_MIN_SCORE = 0.1;
@@ -176,6 +171,10 @@ async function enrichWithFirestore(mediaIds: string[]): Promise<Map<string, Enri
 // ─── Route ────────────────────────────────────────────────────────────────────
 
 export async function POST(req: Request) {
+  const apiKey = process.env.PINECONE_API_KEY;
+  if (!apiKey) console.warn("⚠️ Missing PINECONE_API_KEY environment variable");
+  const index = new Pinecone({ apiKey: apiKey as string }).index("livinglabsdemo").namespace("media");
+
   try {
     const body = await req.json() as SearchRequest;
     const {
