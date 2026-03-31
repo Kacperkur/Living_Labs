@@ -2,8 +2,6 @@
 
 "use client";
 
-export const dynamic = 'force-dynamic';
-
 import Preload from '@/components/Preload';
 import Head from 'next/head';
 import { Scene } from '@/components/Scene';
@@ -11,11 +9,11 @@ import SearchBar from '@/components/SearchBar';
 import ResultPanel from '@/components/ResultPanel';
 import MediaDetailPanel from '@/components/MediaDetailPanel';
 import BuildingPanel from '@/components/BuildingPanel';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SearchResult, SearchBarHandle } from '@/types';
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams();
   const searchBarRef = useRef<SearchBarHandle | null>(null);
   const [results, setResults] = useState<SearchResult[] | null>(null);
@@ -249,5 +247,13 @@ export default function Home() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }
