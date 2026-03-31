@@ -12,6 +12,24 @@ function Loader() {
     return <Html center>{progress.toFixed(1)}%</Html>;
 }
 
+// R3F's resize handler resets the orthographic frustum to symmetric pixel-based
+// values on every canvas resize, which overwrites the custom top/bottom and cuts
+// off the scene. This component re-applies the correct frustum after each resize.
+const CAM_TOP = 350;
+const CAM_BOTTOM = -120;
+function CameraResizer() {
+    const { camera, size } = useThree();
+    useEffect(() => {
+        if (!(camera instanceof THREE.OrthographicCamera)) return;
+        camera.top = CAM_TOP;
+        camera.bottom = CAM_BOTTOM;
+        camera.left = -size.width / 2;
+        camera.right = size.width / 2;
+        camera.updateProjectionMatrix();
+    }, [camera, size]);
+    return null;
+}
+
 const ZOOM_START = 0.75;
 const ZOOM_TARGET = 1.5;
 const ZOOM_EASE = 0.03; // lower = slower ease
@@ -219,6 +237,7 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
                     screenSpacePanning={false}
                 />
 
+                <CameraResizer />
                 <ZoomIntro />
                 <CameraAnimator
                     targetBuilding={cameraTargetBuilding ?? null}
