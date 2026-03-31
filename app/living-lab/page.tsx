@@ -190,7 +190,7 @@ function LivingLabContent() {
             {/* ── Identification Info ── */}
             <div style={{ display: "flex", gap: 30, alignItems: "flex-start" }}>
               <img
-                src={`https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/${encodeURIComponent(building)}.jpg?alt=media`}
+                src={`https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/${encodeURIComponent(building ?? '')}.jpg?alt=media`}
                 alt={lab.lab_name || "Lab"}
                 onError={(e) => { (e.target as HTMLImageElement).style.background = "#c8d8e8"; (e.target as HTMLImageElement).removeAttribute("src"); }}
                 style={{ width: 598, height: 350, objectFit: "cover", flexShrink: 0, backgroundColor: "#c8d8e8" }}
