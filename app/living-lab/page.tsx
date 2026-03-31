@@ -1,7 +1,6 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
-
+import { Suspense } from "react";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import SearchBar from "@/components/SearchBar";
@@ -10,7 +9,7 @@ import MemberBlock from "@/components/MemberBlock";
 import { SearchResult } from "@/types";
 
 
-export default function LivingLabPage() {
+function LivingLabContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -329,5 +328,13 @@ export default function LivingLabPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function LivingLabPage() {
+  return (
+    <Suspense fallback={null}>
+      <LivingLabContent />
+    </Suspense>
   );
 }
