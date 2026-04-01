@@ -12,10 +12,12 @@ import BuildingPanel from '@/components/BuildingPanel';
 import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SearchResult, SearchBarHandle } from '@/types';
+import { useAuth } from '@/lib/auth-context';
 
 function HomeContent() {
   const searchParams = useSearchParams();
   const searchBarRef = useRef<SearchBarHandle | null>(null);
+  const { user, labId } = useAuth();
   const [results, setResults] = useState<SearchResult[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -118,7 +120,10 @@ function HomeContent() {
           {/* Right side: two H2s */}
           <div className="nav-links">
             <a href="/our-labs" style={{ textDecoration: 'none' }}><h2>Our Labs</h2></a>
-            <a href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></a>
+            {user && labId
+              ? <a href={`/admin/lab/${labId}`} style={{ textDecoration: 'none' }}><h2>My Lab</h2></a>
+              : <a href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></a>
+            }
           </div>
         </div>
       </header>

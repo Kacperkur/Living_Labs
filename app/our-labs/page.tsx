@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
 import LabCard, { LabCardData } from '../../components/LabCard';
+import Header from '@/components/Header';
 
 export default function OurLabsPage() {
   const [labs, setLabs] = useState<LabCardData[]>([]);
@@ -24,21 +24,7 @@ export default function OurLabsPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--background-clr-400)', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <header className="header-container">
-        <div className="header-top-row">
-          <Link href="/" className="logo-section" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <img className="header-logo" src="https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/logo.jpg?alt=media" alt="Logo" />
-            <h1 className="header-title">Living Labs</h1>
-          </Link>
-          <div className="nav-links">
-            <Link href="/our-labs" style={{ textDecoration: 'none' }}>
-              <h2>Our Labs</h2>
-            </Link>
-            <a href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></a>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Page content */}
       <main style={{ flex: 1, padding: '40px 48px', textAlign: 'center' }}>
