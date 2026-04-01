@@ -87,6 +87,7 @@ export default function LabAdminPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberPhoto, setNewMemberPhoto] = useState<string | null>(null);
+  const [newMemberPhotoUploading, setNewMemberPhotoUploading] = useState(false);
   const newMemberPhotoRef = useRef<HTMLInputElement>(null);
   const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
@@ -240,6 +241,7 @@ export default function LabAdminPage() {
       formData.append('sdgs', JSON.stringify([...selectedSDGs].map(name => ({ name }))));
       formData.append('members', JSON.stringify(members.map(m => ({ name: m.name, profile_picture_url: m.photo }))));
       if (coverPhoto) formData.append('cover_photo', coverPhoto);
+      if (!coverPhoto && !existingCoverUrl) formData.append('remove_cover', 'true');
 
       const res = await fetch('/api/update-lab', { method: 'PUT', body: formData });
       const data = await res.json();
@@ -470,17 +472,35 @@ export default function LabAdminPage() {
                     Add photo (optional)
                   </button>
                   {newMemberPhoto && (
-                    <img src={newMemberPhoto} alt="preview" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #c7d3e5' }} />
+                    <img src={newMemberPhoto} alt="preview" style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover', border: '2px solid #c7d3e5', opacity: newMemberPhotoUploading ? 0.5 : 1 }} />
                   )}
-                  <button type="button" onClick={addMember}
-                    style={{ fontFamily: 'Onest, sans-serif', fontSize: 13, fontWeight: 600, color: '#fff', background: '#002147', border: 'none', borderRadius: 8, padding: '10px 16px', cursor: 'pointer', flexShrink: 0, marginLeft: 'auto' }}>
+                  {newMemberPhotoUploading && (
+                    <span style={{ fontFamily: 'Onest, sans-serif', fontSize: 12, color: '#64748b' }}>Uploading…</span>
+                  )}
+                  <button type="button" onClick={addMember} disabled={newMemberPhotoUploading}
+                    style={{ fontFamily: 'Onest, sans-serif', fontSize: 13, fontWeight: 600, color: '#fff', background: newMemberPhotoUploading ? '#6b7e96' : '#002147', border: 'none', borderRadius: 8, padding: '10px 16px', cursor: newMemberPhotoUploading ? 'default' : 'pointer', flexShrink: 0, marginLeft: 'auto' }}>
                     Add
                   </button>
                 </div>
                 <input ref={newMemberPhotoRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
-                  onChange={e => {
+                  onChange={async e => {
                     const file = e.target.files?.[0];
-                    if (file) setNewMemberPhoto(URL.createObjectURL(file));
+                    if (!file) return;
+                    const preview = URL.createObjectURL(file);
+                    setNewMemberPhoto(preview);
+                    setNewMemberPhotoUploading(true);
+                    try {
+                      const fd = new FormData();
+                      fd.append('file', file);
+                      fd.append('lab_id', id);
+                      const res = await fetch('/api/upload-media', { method: 'POST', body: fd });
+                      const data = await res.json();
+                      if (res.ok && data.url) {
+                        URL.revokeObjectURL(preview);
+                        setNewMemberPhoto(data.url);
+                      }
+                    } catch { /* keep blob preview; permanent URL failed */ }
+                    finally { setNewMemberPhotoUploading(false); }
                   }} />
               </div>
             </Field>

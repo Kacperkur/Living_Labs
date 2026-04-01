@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db, storage } from '../../../lib/firebase-admin';
 import { Timestamp } from 'firebase-admin/firestore';
+import { clearLabCache } from '../lab-details/route';
 
 const ACCEPTED_IMAGE_TYPES: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -77,6 +78,7 @@ export async function PUT(req: Request) {
     }
 
     await db.collection('labs').doc(labId).update(update);
+    clearLabCache(labId);
     console.log(`✅ update-lab: ${labId} "${labName}"`);
     return NextResponse.json({ ok: true });
 

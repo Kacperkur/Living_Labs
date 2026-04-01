@@ -37,6 +37,10 @@ function setCache(id: string, data: LabDetailsResponse): void {
   cache.set(id, { data, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 
+export function clearLabCache(id: string): void {
+  cache.delete(id);
+}
+
 // ─── Route ────────────────────────────────────────────────────────────────────
 
 export async function GET(req: Request) {
