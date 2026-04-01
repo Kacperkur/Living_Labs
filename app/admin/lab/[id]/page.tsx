@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
+import ResultPanel from '@/components/ResultPanel';
 
 const STORAGE = 'https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o';
 
@@ -99,6 +100,9 @@ export default function LabAdminPage() {
   // ── Media upload state ────────────────────────────────────────────────────
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [mediaLoading, setMediaLoading] = useState(true);
+  const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [step, setStep] = useState<Step>(1);
   const [contentMode, setContentMode] = useState<ContentMode>('upload');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -150,6 +154,26 @@ export default function LabAdminPage() {
   }, [id]);
 
   useEffect(() => { fetchMedia(); }, [fetchMedia]);
+
+  // ── Delete media ──────────────────────────────────────────────────────────
+  const deleteMedia = useCallback(async (item: MediaItem) => {
+    setDeletingId(item.id);
+    setConfirmDeleteId(null);
+    try {
+      const res = await fetch('/api/delete-media', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id, content_url: item.content_url }),
+      });
+      if (!res.ok) throw new Error('Delete failed');
+      setMedia(prev => prev.filter(m => m.id !== item.id));
+      if (selectedMediaId === item.id) setSelectedMediaId(null);
+    } catch {
+      // Leave the item in the list if deletion failed
+    } finally {
+      setDeletingId(null);
+    }
+  }, [selectedMediaId]);
 
   // ── Upload cleanup ────────────────────────────────────────────────────────
   useEffect(() => { pendingUploadRef.current = resolvedPath; }, [resolvedPath]);
@@ -616,22 +640,105 @@ export default function LabAdminPage() {
             </p>
             {mediaLoading && <div style={{ fontSize: 14, color: '#002147', opacity: 0.4, padding: '12px 0' }}>Loading…</div>}
             {!mediaLoading && media.length === 0 && <div style={{ fontSize: 14, color: '#002147', opacity: 0.4, padding: '12px 0' }}>Nothing published yet.</div>}
-            {!mediaLoading && media.map(item => (
-              <div key={item.id} style={{ border: '1px solid #e6e6e6', borderRadius: 10, padding: '16px 20px', marginBottom: 10, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: '#002147', marginBottom: 4 }}>{item.title ?? '(No title)'}</div>
-                  {item.author && <div style={{ fontSize: 12, color: '#002147', opacity: 0.55, marginBottom: 4 }}>{item.author}</div>}
-                  {item.published && (
-                    <div style={{ fontSize: 11, color: '#75b2dd', fontWeight: 600 }}>
-                      {new Date(item.published).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+            {!mediaLoading && (
+              <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid #e6e6e6' }}>
+                {media.map(item => {
+                  const isConfirming = confirmDeleteId === item.id;
+                  const isDeleting   = deletingId === item.id;
+                  return (
+                    <div key={item.id} style={{ position: 'relative' }}>
+                      <ResultPanel
+                        result={{
+                          id: item.id,
+                          title: item.title ?? 'Untitled',
+                          author: item.author,
+                          content_url: item.content_url,
+                          published: item.published,
+                          lab_id: id,
+                          lab_name: labName,
+                          score: 0,
+                          collection: 'media',
+                        }}
+                        selectedId={selectedMediaId}
+                        onSelect={setSelectedMediaId}
+                      />
+
+                      {/* Trash button */}
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          right: 12,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                          zIndex: 10,
+                        }}
+                      >
+                        {isConfirming && (
+                          <>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              style={{
+                                fontFamily: 'Onest, sans-serif', fontSize: 12, fontWeight: 600,
+                                color: '#6b7e96', background: '#f1f5f9',
+                                border: '1.5px solid #c7d3e5', borderRadius: 6,
+                                padding: '4px 10px', cursor: 'pointer',
+                              }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => deleteMedia(item)}
+                              style={{
+                                fontFamily: 'Onest, sans-serif', fontSize: 12, fontWeight: 700,
+                                color: '#fff', background: '#dc2626',
+                                border: 'none', borderRadius: 6,
+                                padding: '4px 10px', cursor: 'pointer',
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isDeleting) return;
+                            setConfirmDeleteId(isConfirming ? null : item.id);
+                          }}
+                          title="Remove media"
+                          style={{
+                            background: isConfirming ? '#fee2e2' : 'rgba(255,255,255,0.92)',
+                            border: `1.5px solid ${isConfirming ? '#fca5a5' : '#e2e8f0'}`,
+                            borderRadius: 8,
+                            width: 34, height: 34,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: isDeleting ? 'default' : 'pointer',
+                            opacity: isDeleting ? 0.4 : 1,
+                            transition: 'background 0.15s, border-color 0.15s',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {isDeleting ? (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 0.75s linear infinite' }}>
+                              <circle cx="12" cy="12" r="10" stroke="#dc2626" strokeWidth="3" strokeDasharray="31.4 31.4" strokeLinecap="round" />
+                            </svg>
+                          ) : (
+                            <img
+                              src="https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/recycle-bin.png?alt=media&token=cbd4f024-7167-4330-a808-209c5f298470"
+                              alt="Delete"
+                              style={{ width: 18, height: 18, objectFit: 'contain' }}
+                            />
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  )}
-                </div>
-                {item.content_url && (
-                  <a href={item.content_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: '#75b2dd', fontWeight: 600, textDecoration: 'none', flexShrink: 0, paddingTop: 2 }}>View ↗</a>
-                )}
+                  );
+                })}
               </div>
-            ))}
+            )}
           </div>
 
         </div>

@@ -70,7 +70,7 @@ interface Member {
 }
 
 export default function CreateLabPage() {
-  const { user, loading, setLabId } = useAuth();
+  const { user, loading, setLabId, profilePicture, username } = useAuth();
   const router = useRouter();
 
   const [labName, setLabName]           = useState('');
@@ -84,6 +84,7 @@ export default function CreateLabPage() {
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberPhoto, setNewMemberPhoto] = useState<string | null>(null);
   const newMemberPhotoRef = useRef<HTMLInputElement>(null);
+  const creatorPhotoRef = useRef<HTMLInputElement>(null);
   const [submitting, setSubmitting]     = useState(false);
   const [error, setError]               = useState<string | null>(null);
 
@@ -94,12 +95,12 @@ export default function CreateLabPage() {
   useEffect(() => {
     if (user) {
       setMembers([{
-        name: user.displayName || user.email || 'You',
-        photo: null,
+        name: username || user.displayName || user.email || 'You',
+        photo: profilePicture,
         isCreator: true,
       }]);
     }
-  }, [user]);
+  }, [user, profilePicture, username]);
 
   useEffect(() => {
     if (!loading && !user) router.replace('/login?redirect=/create-lab');
@@ -321,8 +322,18 @@ export default function CreateLabPage() {
                     borderRadius: 20, padding: '4px 10px 4px 4px',
                   }}
                 >
-                  {/* Avatar */}
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', overflow: 'hidden', flexShrink: 0, background: '#c8d8e8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {/* Avatar — clickable for creator to change their photo */}
+                  <div
+                    onClick={m.isCreator ? () => creatorPhotoRef.current?.click() : undefined}
+                    title={m.isCreator ? 'Click to change your photo' : undefined}
+                    style={{
+                      width: 32, height: 32, borderRadius: '50%', overflow: 'hidden',
+                      flexShrink: 0, background: '#c8d8e8',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      cursor: m.isCreator ? 'pointer' : 'default',
+                      position: 'relative',
+                    }}
+                  >
                     {m.photo ? (
                       <img src={m.photo} alt={m.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                     ) : (
@@ -350,6 +361,34 @@ export default function CreateLabPage() {
                 </div>
               ))}
             </div>
+
+            {/* Creator photo upload */}
+            <input
+              ref={creatorPhotoRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              style={{ display: 'none' }}
+              onChange={e => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const url = URL.createObjectURL(file);
+                setMembers(prev => prev.map(m => m.isCreator ? { ...m, photo: url } : m));
+              }}
+            />
+            {members.some(m => m.isCreator && !m.photo) && (
+              <button
+                type="button"
+                onClick={() => creatorPhotoRef.current?.click()}
+                style={{
+                  fontFamily: 'Onest, sans-serif', fontSize: 13, color: '#002147',
+                  background: '#eef2f8', border: '1.5px dashed #9ab0c4',
+                  borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
+                  alignSelf: 'flex-start', marginBottom: 2,
+                }}
+              >
+                + Add your profile photo
+              </button>
+            )}
 
             {/* Add member input */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

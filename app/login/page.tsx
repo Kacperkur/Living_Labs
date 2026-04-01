@@ -3,8 +3,9 @@
 import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
-import { GoogleAuthProvider, signInWithPopup, getAdditionalUserInfo } from 'firebase/auth';
-import { auth } from '@/lib/firebase-client';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase-client';
 
 function LoginContent() {
   const router = useRouter();
@@ -19,8 +20,14 @@ function LoginContent() {
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      const isNew = getAdditionalUserInfo(result)?.isNewUser ?? false;
-      if (isNew) {
+
+      // Check Firestore for whether they've completed profile setup.
+      // isNewUser is unreliable — it's false for anyone who authenticated
+      // even once before, even if their profile was never saved.
+      const snap = await getDoc(doc(db, 'users', result.user.uid));
+      const hasUsername = snap.exists() && !!snap.data().username;
+
+      if (!hasUsername) {
         router.push(`/setup-profile?redirect=${encodeURIComponent(redirect)}`);
       } else {
         router.push(redirect);
@@ -63,7 +70,7 @@ function LoginContent() {
             Welcome to Living Labs
           </h2>
           <p style={{ fontFamily: 'Onest, sans-serif', fontSize: 14, color: '#6b7e96', margin: '0 0 32px' }}>
-            Sign up below
+            Sign in below
           </p>
 
           <button

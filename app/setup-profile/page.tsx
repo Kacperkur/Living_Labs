@@ -12,8 +12,9 @@ function SetupProfileContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
-  const { user, setProfilePicture } = useAuth();
+  const { user, setProfilePicture, setUsername } = useAuth();
 
+  const [username, setUsernameLocal] = useState('');
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -27,24 +28,32 @@ function SetupProfileContent() {
   }
 
   async function handleSave() {
-    if (!user || !photo) return;
+    if (!user) return;
+    const name = username.trim();
+    if (!name) { setError('Please enter a display name.'); return; }
+
     setSaving(true);
     setError(null);
     try {
-      const storageRef = ref(storage, `profile-pictures/${user.uid}`);
-      await uploadBytes(storageRef, photo);
-      const url = await getDownloadURL(storageRef);
-      await setDoc(doc(db, 'users', user.uid), { profile_picture_url: url }, { merge: true });
-      setProfilePicture(url);
+      let url: string | null = null;
+      if (photo) {
+        const storageRef = ref(storage, `profile-pictures/${user.uid}`);
+        await uploadBytes(storageRef, photo);
+        url = await getDownloadURL(storageRef);
+      }
+
+      await setDoc(doc(db, 'users', user.uid), {
+        username: name,
+        ...(url ? { profile_picture_url: url } : {}),
+      }, { merge: true });
+
+      setUsername(name);
+      if (url) setProfilePicture(url);
       router.push(redirect);
     } catch {
-      setError('Upload failed. Please try again.');
+      setError('Something went wrong. Please try again.');
       setSaving(false);
     }
-  }
-
-  function handleSkip() {
-    router.push(redirect);
   }
 
   return (
@@ -69,14 +78,14 @@ function SetupProfileContent() {
             color: 'var(--tertiary-clr-100)',
             margin: '0 0 8px',
           }}>
-            Add a profile picture
+            Set up your profile
           </h2>
           <p style={{ fontFamily: 'Onest, sans-serif', fontSize: 14, color: '#6b7e96', margin: '0 0 32px' }}>
-            This will appear on your lab page. You can change it later.
+            This will appear on your lab page.
           </p>
 
           {/* Avatar picker */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20, marginBottom: 32 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, marginBottom: 28 }}>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
@@ -123,7 +132,7 @@ function SetupProfileContent() {
                 cursor: 'pointer',
               }}
             >
-              {preview ? 'Change photo' : 'Choose photo'}
+              {preview ? 'Change photo' : 'Add profile photo (optional)'}
             </button>
 
             <input
@@ -135,54 +144,65 @@ function SetupProfileContent() {
             />
           </div>
 
+          {/* Display name */}
+          <div style={{ textAlign: 'left', marginBottom: 24 }}>
+            <label style={{
+              display: 'block',
+              fontFamily: 'Onest, sans-serif',
+              fontWeight: 600,
+              fontSize: 14,
+              color: '#002147',
+              marginBottom: 6,
+            }}>
+              Display name <span style={{ color: '#dc2626' }}>*</span>
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={e => setUsernameLocal(e.target.value)}
+              placeholder="e.g. Dr. Jane Smith"
+              maxLength={60}
+              style={{
+                width: '100%',
+                fontFamily: 'Onest, sans-serif',
+                fontSize: 14,
+                color: '#002147',
+                background: '#fff',
+                border: '1.5px solid #e2e8f0',
+                borderRadius: 8,
+                padding: '10px 14px',
+                boxSizing: 'border-box',
+                outline: 'none',
+              }}
+            />
+          </div>
+
           {error && (
             <div style={{ fontFamily: 'Onest, sans-serif', fontSize: 13, color: '#c0392b', background: '#fdf0ef', border: '1px solid #f5c6c2', borderRadius: 6, padding: '10px 14px', marginBottom: 16, textAlign: 'left' }}>
               {error}
             </div>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={!photo || saving}
-              style={{
-                width: '100%',
-                fontFamily: 'Quantico, sans-serif',
-                fontSize: 15,
-                fontWeight: 700,
-                color: '#fff',
-                background: (!photo || saving) ? '#94a3b8' : '#002147',
-                border: 'none',
-                borderRadius: 8,
-                padding: '13px 16px',
-                cursor: (!photo || saving) ? 'default' : 'pointer',
-                transition: 'background 0.2s',
-              }}
-            >
-              {saving ? 'Saving…' : 'Save & continue'}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSkip}
-              disabled={saving}
-              style={{
-                width: '100%',
-                fontFamily: 'Onest, sans-serif',
-                fontSize: 14,
-                fontWeight: 600,
-                color: '#6b7e96',
-                background: 'transparent',
-                border: 'none',
-                borderRadius: 8,
-                padding: '10px 16px',
-                cursor: saving ? 'default' : 'pointer',
-              }}
-            >
-              Skip for now
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            style={{
+              width: '100%',
+              fontFamily: 'Quantico, sans-serif',
+              fontSize: 15,
+              fontWeight: 700,
+              color: '#fff',
+              background: saving ? '#94a3b8' : '#002147',
+              border: 'none',
+              borderRadius: 8,
+              padding: '13px 16px',
+              cursor: saving ? 'default' : 'pointer',
+              transition: 'background 0.2s',
+            }}
+          >
+            {saving ? 'Saving…' : 'Save & continue'}
+          </button>
 
         </div>
       </main>
