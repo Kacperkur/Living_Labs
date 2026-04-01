@@ -8,6 +8,7 @@ export interface LabDetailsResponse {
   name: string | null;
   location: string | null;
   building: string | null;
+  cover_photo_url: string | null;
   start_date: string | null;
   end_date: string | null;
   biography: string | null;
@@ -84,6 +85,7 @@ export async function GET(req: Request) {
       name: (fs.lab_name ?? fs.name ?? null) as string | null,
       location: (fs.Location ?? fs.location ?? null) as string | null,
       building: (fs.Location ?? null) as string | null,
+      cover_photo_url: (fs.cover_photo_url ?? null) as string | null,
       start_date: toISO(fs.start_date),
       end_date: toISO(fs.end_date),
       biography: (fs.biography ?? null) as string | null,
