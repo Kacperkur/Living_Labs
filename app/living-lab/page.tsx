@@ -1,16 +1,18 @@
 "use client";
 
+import { Suspense } from "react";
 import { useState, useEffect, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import SearchBar from "@/components/SearchBar";
+import { useSearchParams } from "next/navigation";
 import ResultPanel from "@/components/ResultPanel";
 import MemberBlock from "@/components/MemberBlock";
+import Header from "@/components/Header";
 import { SearchResult } from "@/types";
+import { useAuth } from "@/lib/auth-context";
 
 
-export default function LivingLabPage() {
-  const router = useRouter();
+function LivingLabContent() {
   const searchParams = useSearchParams();
+  const { user, labId: myLabId } = useAuth();
 
   const [lab, setLab] = useState<SearchResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,6 +21,7 @@ export default function LivingLabPage() {
   const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
   const [members, setMembers] = useState<{ name: string; profile_picture_url: string | null }[]>([]);
   const [building, setBuilding] = useState<string | null>(null);
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState<string | null>(null);
 
   const transformLabToSearchResult = useCallback((lab: any): SearchResult => ({
     id: lab.id || "",
@@ -76,6 +79,7 @@ export default function LivingLabPage() {
           setLab(transformLabToSearchResult(labData));
           setMembers(labData.members ?? []);
           setBuilding(labData.building ?? null);
+          setCoverPhotoUrl(labData.cover_photo_url ?? null);
         }
 
         if (mediaRes.ok) {
@@ -96,30 +100,11 @@ export default function LivingLabPage() {
     return () => { isMounted = false; controller.abort(); };
   }, [searchParams, transformLabToSearchResult]);
 
-  const handleSearchResults = useCallback((matches: SearchResult[], query: string) => {
-    router.push(`/?q=${encodeURIComponent(query)}`);
-  }, [router]);
-
   const sdgs: any[] = lab?.metadata?.SDGs ?? [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
-      {/* Header */}
-      <header className="header-container">
-        <div className="header-top-row">
-          <a href="/" className="logo-section" style={{ textDecoration: "none", color: "inherit" }}>
-            <img className="header-logo" src="/logo.jpg" alt="Logo" />
-            <h1 className="header-title">Living Labs</h1>
-          </a>
-          <div className="search-bar-wrapper">
-            <SearchBar onResults={handleSearchResults} />
-          </div>
-          <div className="nav-links">
-            <a href="/our-labs" style={{ textDecoration: 'none' }}><h2>Our Labs</h2></a>
-            <a href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></a>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Page Content */}
       <div style={{ flex: 1, overflowY: "auto", backgroundColor: "#fff" }}>
@@ -189,25 +174,41 @@ export default function LivingLabPage() {
             {/* ── Identification Info ── */}
             <div style={{ display: "flex", gap: 30, alignItems: "flex-start" }}>
               <img
-                src={`/lab_images/${building}.jpg`}
+                src={coverPhotoUrl ?? `https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/${encodeURIComponent(building ?? '')}.jpg?alt=media`}
                 alt={lab.lab_name || "Lab"}
                 onError={(e) => { (e.target as HTMLImageElement).style.background = "#c8d8e8"; (e.target as HTMLImageElement).removeAttribute("src"); }}
                 style={{ width: 598, height: 350, objectFit: "cover", flexShrink: 0, backgroundColor: "#c8d8e8" }}
               />
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <p style={{ fontFamily: "Onest, sans-serif", fontWeight: 700, fontSize: 48, color: "#002147", margin: 0, lineHeight: 1 }}>
-                  {lab.lab_name}
-                </p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+                  <p style={{ fontFamily: "Onest, sans-serif", fontWeight: 700, fontSize: 48, color: "#002147", margin: 0, lineHeight: 1 }}>
+                    {lab.lab_name}
+                  </p>
+                  {user && myLabId && myLabId === lab.lab_id && (
+                    <a
+                      href={`/admin/lab/${lab.lab_id}`}
+                      style={{
+                        fontFamily: "Onest, sans-serif", fontWeight: 600, fontSize: 14,
+                        color: "#fff", background: "#002147",
+                        borderRadius: 8, padding: "8px 16px",
+                        textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0,
+                        marginLeft: "auto",
+                      }}
+                    >
+                      Manage Lab
+                    </a>
+                  )}
+                </div>
                 {lab.metadata?.location && (
                   <p style={{ fontFamily: "Onest, sans-serif", fontWeight: 400, fontSize: 24, color: "#002147", margin: 0, lineHeight: 1 }}>
                     {lab.metadata.location}
                   </p>
                 )}
-                {lab.start_date && (
+                {lab.metadata?.start_date && (
                   <p style={{ fontFamily: "Onest, sans-serif", fontWeight: 400, fontSize: 24, color: "#000", margin: 0, lineHeight: 1 }}>
-                    {formatDate(lab.start_date)}
-                    {lab.end_date && lab.end_date !== lab.start_date
-                      ? ` – ${formatDate(lab.end_date)}`
+                    {formatDate(lab.metadata.start_date as string)}
+                    {lab.metadata?.end_date && lab.metadata.end_date !== lab.metadata.start_date
+                      ? ` – ${formatDate(lab.metadata.end_date as string)}`
                       : " – Present"}
                   </p>
                 )}
@@ -242,7 +243,7 @@ export default function LivingLabPage() {
                         const name = typeof sdg === "string" ? sdg : (sdg?.name || sdg?.content_url || "");
                         const num = SDG_NAME_TO_NUMBER[name];
                         if (!num) return null;
-                        const imagePath = `/SDG_pngs/E-WEB-Goal-${String(num).padStart(2, "0")}.png`;
+                        const imagePath = `https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/E-WEB-Goal-${String(num).padStart(2, "0")}.png?alt=media`;
                         return (
                           <img
                             key={i}
@@ -327,5 +328,13 @@ export default function LivingLabPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function LivingLabPage() {
+  return (
+    <Suspense fallback={null}>
+      <LivingLabContent />
+    </Suspense>
   );
 }

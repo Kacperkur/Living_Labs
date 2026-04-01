@@ -110,7 +110,7 @@ export default function BuildingPanel({ buildingName, onClose }: BuildingPanelPr
         {buildingName && (
           <div key={buildingName} style={{ width: '100%', borderRadius: 8, overflow: 'hidden' }}>
             <img
-              src={`/lab_images/${buildingName}.jpg`}
+              src={`https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/${encodeURIComponent(buildingName)}.jpg?alt=media`}
               alt={buildingName}
               style={{
                 width: '100%',
@@ -119,13 +119,8 @@ export default function BuildingPanel({ buildingName, onClose }: BuildingPanelPr
                 display: 'block',
               }}
               onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                if (target.src.includes('.jpg')) {
-                  target.src = `/lab_images/${buildingName}.png`;
-                } else {
-                  const container = target.parentElement;
-                  if (container) container.style.display = 'none';
-                }
+                const container = (e.target as HTMLImageElement).parentElement;
+                if (container) container.style.display = 'none';
               }}
             />
           </div>

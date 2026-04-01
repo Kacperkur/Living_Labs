@@ -9,13 +9,15 @@ import SearchBar from '@/components/SearchBar';
 import ResultPanel from '@/components/ResultPanel';
 import MediaDetailPanel from '@/components/MediaDetailPanel';
 import BuildingPanel from '@/components/BuildingPanel';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { SearchResult, SearchBarHandle } from '@/types';
+import { useAuth } from '@/lib/auth-context';
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams();
   const searchBarRef = useRef<SearchBarHandle | null>(null);
+  const { user, labId } = useAuth();
   const [results, setResults] = useState<SearchResult[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -100,7 +102,7 @@ export default function Home() {
         <div className="header-top-row">
           {/* Left side: logo and H1 */}
           <a href="/" className="logo-section" style={{ textDecoration: "none", color: "inherit" }}>
-            <img className="header-logo" src="/logo.jpg" alt="Logo" />
+            <img className="header-logo" src="https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/logo.jpg?alt=media" alt="Logo" />
             <h1 className="header-title">Living Labs</h1>
           </a>
 
@@ -118,7 +120,10 @@ export default function Home() {
           {/* Right side: two H2s */}
           <div className="nav-links">
             <a href="/our-labs" style={{ textDecoration: 'none' }}><h2>Our Labs</h2></a>
-            <a href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></a>
+            {user && labId
+              ? <a href={`/admin/lab/${labId}`} style={{ textDecoration: 'none' }}><h2>My Lab</h2></a>
+              : <a href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></a>
+            }
           </div>
         </div>
       </header>
@@ -247,5 +252,13 @@ export default function Home() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }

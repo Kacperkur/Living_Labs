@@ -1,7 +1,7 @@
 "use client";
 
-import Link from 'next/link';
 import { useState } from 'react';
+import Header from '@/components/Header';
 
 export default function JoinPage() {
   const [submitted, setSubmitted] = useState(false);
@@ -22,19 +22,7 @@ export default function JoinPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--background-clr-400)', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <header className="header-container">
-        <div className="header-top-row">
-          <Link href="/" className="logo-section" style={{ textDecoration: 'none', color: 'inherit' }}>
-            <img className="header-logo" src="/logo.jpg" alt="Logo" />
-            <h1 className="header-title">Living Labs</h1>
-          </Link>
-          <div className="nav-links">
-            <Link href="/our-labs" style={{ textDecoration: 'none' }}><h2>Our Labs</h2></Link>
-            <Link href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></Link>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Hero section */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 24px', textAlign: 'center' }}>
@@ -78,7 +66,7 @@ export default function JoinPage() {
             lineHeight: 1.7,
             margin: '0 0 12px',
           }}>
-            Living Labs is building a platform to connect URI&rsquo;s research community &mdash;
+            Living Labs is building a platform to <strong style={{ color: 'var(--tertiary-clr-100)' }}>connect URI</strong>&rsquo;s research community &mdash;
             surfacing labs, people, and published work in one place.
           </p>
           <p style={{
@@ -88,9 +76,8 @@ export default function JoinPage() {
             lineHeight: 1.7,
             margin: '0 0 48px',
           }}>
-            Interested in learning more or shaping what we build?{' '}
-            <strong style={{ color: 'var(--tertiary-clr-100)' }}>Join early testing &amp; updates</strong>{' '}
-            and we&rsquo;ll reach out as things develop.
+            <strong style={{ color: 'var(--tertiary-clr-100)' }}>If you are interested sign-up below!</strong>{' '}
+            We will reach out to confirm your eligibility and get you a link to begin growing.
           </p>
 
           {/* Form / confirmation */}

@@ -94,7 +94,7 @@ export default function LabCard({ lab }: { lab: LabCardData }) {
           <div style={{ flex: '0 0 180px', overflow: 'hidden', background: '#c8d6e5', position: 'relative' }}>
             {lab.building ? (
               <img
-                src={`/lab_images/${lab.building}.jpg`}
+                src={`https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/${encodeURIComponent(lab.building)}.jpg?alt=media`}
                 alt={lab.building}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 onError={(e) => {
@@ -183,7 +183,7 @@ export default function LabCard({ lab }: { lab: LabCardData }) {
               {sdgNums.map(num => (
                 <img
                   key={num}
-                  src={`/SDG_pngs/E-WEB-Goal-${String(num).padStart(2, '0')}.png`}
+                  src={`https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/E-WEB-Goal-${String(num).padStart(2, '0')}.png?alt=media`}
                   alt={`SDG ${num}`}
                   title={`SDG ${num}`}
                   style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 3 }}
