@@ -19,6 +19,7 @@ export default function Header() {
         </Link>
         <div className="nav-links">
           <Link href="/our-labs" style={{ textDecoration: 'none' }}><h2>Our Labs</h2></Link>
+          <Link href="/about" style={{ textDecoration: 'none' }}><h2>About</h2></Link>
           {isOwner
             ? <Link href={`/admin/lab/${labId}`} style={{ textDecoration: 'none' }}><h2>My Lab</h2></Link>
             : <Link href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></Link>
