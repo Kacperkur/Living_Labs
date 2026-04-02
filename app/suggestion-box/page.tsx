@@ -220,12 +220,24 @@ export default function SuggestionBoxPage() {
                 </label>
                 <textarea
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
+                  onChange={(e) => setMessage(e.target.value.slice(0, 1000))}
                   placeholder="Share your suggestion, idea, or feedback..."
                   required
                   rows={6}
+                  maxLength={1000}
                   style={{ ...inputStyle, resize: "vertical" }}
                 />
+                <p
+                  style={{
+                    fontFamily: "Onest, sans-serif",
+                    fontSize: 12,
+                    color: message.length >= 1000 ? "#E74C3C" : "#a0aec0",
+                    margin: "4px 0 0",
+                    textAlign: "right",
+                  }}
+                >
+                  {message.length}/1000
+                </p>
               </div>
 
               {status === "error" && (

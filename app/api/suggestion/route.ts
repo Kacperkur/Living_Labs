@@ -11,6 +11,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
+    if (message.length > 1000) {
+      return NextResponse.json({ error: 'Message must be 1000 characters or fewer' }, { status: 400 });
+    }
+
     const fromLabel = name?.trim() || 'Anonymous';
     const replyInfo = email?.trim() ? `<p><strong>Reply to:</strong> ${email.trim()}</p>` : '';
 
