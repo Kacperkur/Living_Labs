@@ -27,6 +27,19 @@ function HomeContent() {
   const [selectedMedia, setSelectedMedia] = useState<SearchResult | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
   const [cameraTargetBuilding, setCameraTargetBuilding] = useState<string | null>("Washburn Hall");
+  const [labBuildings, setLabBuildings] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch('/api/all-labs')
+      .then(r => r.json())
+      .then(data => {
+        const buildings = new Set<string>(
+          (data.labs ?? []).map((l: any) => l.building).filter(Boolean)
+        );
+        setLabBuildings(buildings);
+      })
+      .catch(() => {});
+  }, []);
 
   // Handle search from URL query parameter
   useEffect(() => {
@@ -149,7 +162,7 @@ function HomeContent() {
         }}>
           {/* Map - takes remaining space or full space when no results */}
           <div className="map-container">
-            <Scene onBuildingClick={handleBuildingClick} cameraTargetBuilding={cameraTargetBuilding} />
+            <Scene onBuildingClick={handleBuildingClick} cameraTargetBuilding={cameraTargetBuilding} labBuildings={labBuildings} />
           </div>
 
           {/* Results at bottom - shows all or just selected one */}
