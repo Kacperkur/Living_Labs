@@ -120,6 +120,7 @@ function HomeContent() {
           {/* Right side: two H2s */}
           <div className="nav-links">
             <a href="/our-labs" style={{ textDecoration: 'none' }}><h2>Our Labs</h2></a>
+            <a href="/about" style={{ textDecoration: 'none' }}><h2>About</h2></a>
             {user && labId
               ? <a href={`/admin/lab/${labId}`} style={{ textDecoration: 'none' }}><h2>My Lab</h2></a>
               : <a href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></a>

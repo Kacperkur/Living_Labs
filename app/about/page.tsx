@@ -1,6 +1,66 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
+
+const LAB_COMPONENTS = [
+  {
+    id: "idea",
+    label: "Idea",
+    color: "#E74C3C",
+    icon: "https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/key-lab-components%2Fidea.png?alt=media&token=d410e45b-559c-407b-9e2a-45b865e60668",
+    body: "Every Living Lab begins with a clearly defined problem or opportunity grounded in real campus or community needs. These ideas are shaped by curiosity, research, and a drive to test solutions in a real-world environment.",
+    angle: 0,
+  },
+  {
+    id: "location",
+    label: "Location",
+    color: "#E67E22",
+    icon: "https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/key-lab-components%2Flocation.png?alt=media&token=11b3b777-5bbe-4128-a4f7-557ba214c4ae",
+    body: "The campus serves as a dynamic test bed where ideas are implemented, observed, and refined in context. Each project is tied to a specific physical space, allowing users to see where the work happens and engage with it directly.",
+    angle: 60,
+  },
+  {
+    id: "partners",
+    label: "Partners",
+    color: "#F1C40F",
+    icon: "https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/key-lab-components%2Fpartnerships.png?alt=media&token=c803832f-3e2d-4332-868b-f3300ebe584c",
+    body: "Living Labs are supported by a network of students, faculty, and external collaborators who bring diverse expertise. These partnerships ensure continuity, credibility, and access to resources beyond student turnover.",
+    angle: 120,
+  },
+  {
+    id: "data",
+    label: "Data Collection",
+    color: "#2ECC71",
+    icon: "https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/key-lab-components%2Fdata%20collection.png?alt=media&token=d1678641-f0ef-43da-b953-a58adcecb100",
+    body: "Projects continuously gather data in formats best suited to their goals, from quantitative measurements to qualitative observations. This ongoing collection ensures that insights are grounded in real evidence and evolving conditions.",
+    angle: 180,
+  },
+  {
+    id: "outreach",
+    label: "Outreach",
+    color: "#3498DB",
+    icon: "https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/key-lab-components%2Foutreach.png?alt=media&token=e18c1ea4-271e-4e62-9648-268267e5e86a",
+    body: "Findings and progress are shared through the platform and other media to increase visibility and engagement. Outreach connects projects with new audiences, potential collaborators, and funding opportunities.",
+    angle: 240,
+  },
+  {
+    id: "outcome",
+    label: "Outcome",
+    color: "#002147",
+    icon: "https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/key-lab-components%2Foutcomes.png?alt=media&token=300c9c29-58bf-4c6e-a9ec-e12dbb82058d",
+    body: "Outcomes represent the tangible results of experimentation, including prototypes, reports, and implemented solutions. They demonstrate how collected data and tested ideas translate into real impact.",
+    angle: 300,
+  },
+];
+
+const FEEDBACK_LOOP = {
+  id: "feedback",
+  label: "Feedback Loop",
+  color: "#9B59B6",
+  icon: "https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/key-lab-components%2Ffeedback%20loop.png?alt=media&token=c46c5f6f-63c6-4338-938c-c5daa57fa074",
+  body: "Each project operates within a continuous feedback loop where data, outcomes, and user input inform the next iteration. This cycle enables teams to refine their work, adapt to new insights, and sustain long-term innovation through direct engagement with their audience and collaborators.",
+};
 
 const MEDIA_EXAMPLES = [
   {
@@ -55,7 +115,97 @@ const SECTIONS = [
   },
 ];
 
+// Radius and card size for the hexagonal layout
+const RADIUS = 165;
+const CARD_SIZE = 110;
+
+function toRad(deg: number) {
+  return (deg * Math.PI) / 180;
+}
+
+function LabCard({
+  label,
+  color,
+  icon,
+  selected,
+  onClick,
+  style,
+}: {
+  label: string;
+  color: string;
+  icon: string;
+  selected: boolean;
+  onClick: () => void;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        width: CARD_SIZE,
+        height: CARD_SIZE,
+        borderRadius: 16,
+        background: color,
+        border: selected ? "3px solid #fff" : "3px solid transparent",
+        boxShadow: selected
+          ? `0 0 0 3px ${color}, 0 8px 32px rgba(0,0,0,0.22)`
+          : "0 4px 16px rgba(0,0,0,0.13)",
+        cursor: "pointer",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 8,
+        padding: 12,
+        transition: "transform 0.2s, box-shadow 0.2s",
+        transform: selected ? "scale(1.08)" : "scale(1)",
+        position: "absolute",
+        ...style,
+      }}
+      onMouseEnter={(e) => {
+        if (!selected) (e.currentTarget as HTMLElement).style.transform = "scale(1.05)";
+      }}
+      onMouseLeave={(e) => {
+        if (!selected) (e.currentTarget as HTMLElement).style.transform = "scale(1)";
+      }}
+    >
+      <img src={icon} alt={label} style={{ width: 40, height: 40, objectFit: "contain", filter: "brightness(0) invert(1)" }} />
+      <span
+        style={{
+          fontFamily: "Onest, sans-serif",
+          fontSize: 11,
+          fontWeight: 700,
+          color: "white",
+          textAlign: "center",
+          lineHeight: 1.2,
+          letterSpacing: 0.4,
+          textTransform: "uppercase",
+        }}
+      >
+        {label}
+      </span>
+    </button>
+  );
+}
+
 export default function AboutPage() {
+  const [selected, setSelected] = useState<string | null>(null);
+  const [narrow, setNarrow] = useState(false);
+
+  // 900px is roughly where carousel + text start to overflow side-by-side
+  useEffect(() => {
+    const check = () => setNarrow(window.innerWidth < 900);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const allCards = [...LAB_COMPONENTS, FEEDBACK_LOOP];
+  const activeCard = allCards.find((c) => c.id === selected) ?? null;
+
+  const containerSize = RADIUS * 2 + CARD_SIZE + 20;
+  const center = containerSize / 2;
+
   return (
     <div
       style={{
@@ -71,38 +221,115 @@ export default function AboutPage() {
         {/* Hero */}
         <div
           style={{
-            padding: "64px 80px 48px",
+            padding: narrow ? "32px 24px" : "32px 80px",
             borderBottom: "1px solid #e2e4e7",
             display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            textAlign: "center",
+            flexDirection: narrow ? "column" : "row",
+            alignItems: narrow ? "center" : "center",
+            gap: 48,
           }}
         >
-          <h1
+          {/* Left — carousel */}
+          <div style={{ flexShrink: 0 }}>
+          {/* Hexagonal carousel */}
+          <div
             style={{
-              fontFamily: "Quantico, sans-serif",
-              fontSize: 56,
-              fontWeight: 400,
-              color: "var(--tertiary-clr-100)",
-              margin: 0,
-              lineHeight: 1.1,
+              position: "relative",
+              width: containerSize,
+              height: containerSize,
             }}
           >
-            Living Labs
-          </h1>
-          <p
-            style={{
-              fontFamily: "Onest, sans-serif",
-              fontSize: 20,
-              color: "#6b7e96",
-              marginTop: 16,
-              maxWidth: 640,
-              lineHeight: 1.6,
-            }}
-          >
-            A platform connecting URI's research labs, students, and partners—making academic work visible, accessible, and actionable.
-          </p>
+            {/* Outer 6 cards */}
+            {LAB_COMPONENTS.map((card) => {
+              const rad = toRad(card.angle - 90);
+              const x = center + RADIUS * Math.cos(rad) - CARD_SIZE / 2;
+              const y = center + RADIUS * Math.sin(rad) - CARD_SIZE / 2;
+              return (
+                <LabCard
+                  key={card.id}
+                  label={card.label}
+                  color={card.color}
+                  icon={card.icon}
+                  selected={selected === card.id}
+                  onClick={() => setSelected(selected === card.id ? null : card.id)}
+                  style={{ left: x, top: y }}
+                />
+              );
+            })}
+
+            {/* Center — Feedback Loop */}
+            <LabCard
+              label={FEEDBACK_LOOP.label}
+              color={FEEDBACK_LOOP.color}
+              icon={FEEDBACK_LOOP.icon}
+              selected={selected === FEEDBACK_LOOP.id}
+              onClick={() => setSelected(selected === FEEDBACK_LOOP.id ? null : FEEDBACK_LOOP.id)}
+              style={{ left: center - CARD_SIZE / 2, top: center - CARD_SIZE / 2 }}
+            />
+          </div>
+          </div>
+
+          {/* Right — title + description */}
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: narrow ? "center" : "flex-start", textAlign: narrow ? "center" : "left" }}>
+            <h1
+              style={{
+                fontFamily: "Quantico, sans-serif",
+                fontSize: 56,
+                fontWeight: 400,
+                color: "var(--tertiary-clr-100)",
+                margin: "0 0 16px",
+                lineHeight: 1.1,
+              }}
+            >
+              Living Labs
+            </h1>
+            <div style={{ transition: "opacity 0.2s", minHeight: 100 }}>
+              {activeCard ? (
+                <>
+                  <h3
+                    style={{
+                      fontFamily: "Quantico, sans-serif",
+                      fontSize: 22,
+                      fontWeight: 400,
+                      color: activeCard.color === "#F1C40F" ? "#b8860b" : activeCard.color,
+                      margin: "0 0 8px",
+                    }}
+                  >
+                    {activeCard.label}
+                  </h3>
+                  <p
+                    style={{
+                      fontFamily: "Onest, sans-serif",
+                      fontSize: 18,
+                      color: "#6b7e96",
+                      margin: 0,
+                      lineHeight: 1.7,
+                    }}
+                  >
+                    {activeCard.body}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p
+                    style={{
+                      fontFamily: "Onest, sans-serif",
+                      fontSize: 20,
+                      color: "#6b7e96",
+                      margin: "0 0 12px",
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    A platform connecting URI's research labs, students, and partners—making academic work visible, accessible, and actionable.
+                  </p>
+                  <p style={{ fontFamily: "Onest, sans-serif", fontSize: 13, color: "#a0aec0", margin: 0 }}>
+                    Click any card to learn more
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+
         </div>
 
         {/* Q&A Sections */}
