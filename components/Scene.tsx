@@ -30,8 +30,8 @@ function CameraResizer() {
     return null;
 }
 
-const ZOOM_START = 0.75;
-const ZOOM_TARGET = 1.5;
+const ZOOM_START = 0.4;
+const ZOOM_TARGET = 0.9;
 const ZOOM_EASE = 0.03; // lower = slower ease
 
 function ZoomIntro() {
@@ -158,14 +158,27 @@ export function Scene({ onBuildingClick, cameraTargetBuilding, labBuildings }: S
         right.crossVectors(forward, cam.up).normalize();
 
         const zoom = (cam as any).zoom || 1;
-        const factor = 0.5 * (1 / zoom);
+        const factor = 1.2 * (1 / zoom);
 
         const movement = new THREE.Vector3();
-        movement.addScaledVector(right, -dx2 * factor * 0.3);
+        movement.addScaledVector(right, -dx2 * factor);
         movement.addScaledVector(forward, dy2 * factor);
 
         cam.position.add(movement);
         controls.target.add(movement);
+
+        // North/South/East/West pan bounds — derived from building extents + padding
+        const BOUND_W = -700, BOUND_E = 800;   // X axis (west/east)
+        const BOUND_N = -1500, BOUND_S = 750;  // Z axis (north/south)
+        const cx = Math.max(BOUND_W, Math.min(BOUND_E, controls.target.x));
+        const cz = Math.max(BOUND_N, Math.min(BOUND_S, controls.target.z));
+        const snapX = cx - controls.target.x;
+        const snapZ = cz - controls.target.z;
+        controls.target.x = cx;
+        controls.target.z = cz;
+        cam.position.x += snapX;
+        cam.position.z += snapZ;
+
         controls.update();
     }
 
@@ -191,10 +204,10 @@ export function Scene({ onBuildingClick, cameraTargetBuilding, labBuildings }: S
                     makeDefault
                     position={[300, 200, -200]}
                     rotation={[-Math.PI / 4, Math.PI / 4, 0]}
-                    zoom={1.5}
+                    zoom={0.9}
                     top={350}
                     bottom={-120}
-                    near={0.4}
+                    near={-5000}
                     far={10000}
                 />
                 <directionalLight
@@ -233,7 +246,7 @@ export function Scene({ onBuildingClick, cameraTargetBuilding, labBuildings }: S
                     enableRotate={false}
                     enablePan={false}
                     enableZoom={true}
-                    minZoom={0.75}
+                    minZoom={0.4}
                     maxZoom={2}
                     screenSpacePanning={false}
                 />
