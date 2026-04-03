@@ -338,8 +338,8 @@ export default function AboutPage() {
             key={heading}
             style={{
               display: "flex",
-              flexDirection: side === "left" ? "row" : "row-reverse",
-              alignItems: "flex-start",
+              flexDirection: narrow ? "column" : side === "left" ? "row" : "row-reverse",
+              alignItems: narrow ? "center" : "flex-start",
               gap: 0,
               borderBottom: "1px solid #e2e4e7",
             }}
@@ -347,21 +347,22 @@ export default function AboutPage() {
             {/* Heading column */}
             <div
               style={{
-                flex: "0 0 320px",
-                padding: "64px 48px",
-                borderRight: side === "left" ? "1px solid #e2e4e7" : "none",
-                borderLeft: side === "right" ? "1px solid #e2e4e7" : "none",
+                flex: narrow ? "none" : "0 0 320px",
+                width: narrow ? "100%" : undefined,
+                padding: narrow ? "40px 24px 16px" : "64px 48px",
+                borderRight: !narrow && side === "left" ? "1px solid #e2e4e7" : "none",
+                borderLeft: !narrow && side === "right" ? "1px solid #e2e4e7" : "none",
               }}
             >
               <h2
                 style={{
                   fontFamily: "Quantico, sans-serif",
-                  fontSize: 40,
+                  fontSize: narrow ? 28 : 40,
                   fontWeight: 400,
                   color: "var(--tertiary-clr-100)",
                   margin: 0,
                   lineHeight: 1.2,
-                  textAlign: side,
+                  textAlign: narrow ? "center" : side,
                 }}
               >
                 {heading}
@@ -372,7 +373,9 @@ export default function AboutPage() {
             <div
               style={{
                 flex: 1,
-                padding: "64px 64px",
+                padding: narrow ? "0 24px 40px" : "64px 64px",
+                width: narrow ? "100%" : undefined,
+                boxSizing: "border-box",
               }}
             >
               <p
@@ -382,7 +385,8 @@ export default function AboutPage() {
                   color: "#6b7e96",
                   margin: 0,
                   lineHeight: 1.7,
-                  maxWidth: 680,
+                  maxWidth: narrow ? "none" : 680,
+                  textAlign: narrow ? "center" : "left",
                 }}
               >
                 {body}
@@ -395,8 +399,8 @@ export default function AboutPage() {
         <div
           style={{
             display: "flex",
-            flexDirection: "row-reverse",
-            alignItems: "flex-start",
+            flexDirection: narrow ? "column" : "row-reverse",
+            alignItems: narrow ? "center" : "flex-start",
             gap: 0,
             borderBottom: "1px solid #e2e4e7",
           }}
@@ -404,20 +408,21 @@ export default function AboutPage() {
           {/* Heading column */}
           <div
             style={{
-              flex: "0 0 320px",
-              padding: "64px 48px",
-              borderLeft: "1px solid #e2e4e7",
+              flex: narrow ? "none" : "0 0 320px",
+              width: narrow ? "100%" : undefined,
+              padding: narrow ? "40px 24px 16px" : "64px 48px",
+              borderLeft: !narrow ? "1px solid #e2e4e7" : "none",
             }}
           >
             <h2
               style={{
                 fontFamily: "Quantico, sans-serif",
-                fontSize: 40,
+                fontSize: narrow ? 28 : 40,
                 fontWeight: 400,
                 color: "var(--tertiary-clr-100)",
                 margin: 0,
                 lineHeight: 1.2,
-                textAlign: "right",
+                textAlign: narrow ? "center" : "right",
               }}
             >
               What should I post?
@@ -425,7 +430,7 @@ export default function AboutPage() {
           </div>
 
           {/* Media cards column */}
-          <div style={{ flex: 1, padding: "48px 64px", display: "flex", flexDirection: "row", gap: 24 }}>
+          <div style={{ flex: 1, padding: narrow ? "0 24px 40px" : "48px 64px", display: narrow ? "grid" : "flex", gridTemplateColumns: narrow ? "1fr 1fr" : undefined, flexDirection: narrow ? undefined : "row", gap: 24, width: narrow ? "100%" : undefined, boxSizing: "border-box" }}>
             {MEDIA_EXAMPLES.map((item) => (
               <div
                 key={item.type}
