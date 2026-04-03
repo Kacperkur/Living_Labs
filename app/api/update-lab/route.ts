@@ -68,7 +68,7 @@ export async function PUT(req: Request) {
             metadata: { cacheControl: 'public, max-age=31536000' },
           });
           await file.makePublic();
-          update.cover_photo_url = `https://storage.googleapis.com/${bucket.name}/${storagePath}`;
+          update.cover_photo_url = `https://storage.googleapis.com/${bucket.name}/${storagePath}?v=${Date.now()}`;
         } catch (err) {
           console.error('⚠️ update-lab: cover photo upload failed:', err);
         }

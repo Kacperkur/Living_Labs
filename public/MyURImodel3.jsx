@@ -18,15 +18,26 @@ const LABEL_STYLE = {
   pointerEvents: 'none',
 }
 
-function BuildingLabel({ name, yOffset = 55 }) {
+function BuildingLabel({ name, yOffset = 55, hasLab = false }) {
   return (
     <Html position={[0, yOffset, 0]} center style={{ pointerEvents: 'none' }}>
-      <div style={LABEL_STYLE}>{name}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+        {hasLab && (
+          <div style={{
+            width: 8,
+            height: 8,
+            borderRadius: '50%',
+            background: '#EFCB68',
+            boxShadow: '0 0 5px rgba(239,203,104,0.9)',
+          }} />
+        )}
+        <div style={LABEL_STYLE}>{name}</div>
+      </div>
     </Html>
   )
 }
 
-export function Model({ onBuildingClick, ...props }) {
+export function Model({ onBuildingClick, labBuildings, ...props }) {
   const { nodes, materials } = useGLTF('/myURImodel3.glb')
   const bld = materials['Material.002']
   const path = materials['paths_footway.002']
@@ -39,157 +50,161 @@ export function Model({ onBuildingClick, ...props }) {
     }
   }
 
+  function hasLab(name) {
+    return labBuildings?.has(name) ?? false
+  }
+
   return (
     <group {...props} dispose={null} rotation={[0, Math.PI / 2, 0]}>
 
       <group name="Bliss Hall" position={[214.439, 0, -314.992]} {...click('Bliss Hall')}>
         <mesh geometry={nodes.Bliss_Hall.geometry} material={bld} rotation={[Math.PI, -1.54, Math.PI]} scale={[20.504, 40.774, 47.901]} castShadow />
-        <BuildingLabel name="Bliss Hall" />
+        <BuildingLabel name="Bliss Hall" hasLab={hasLab('Bliss Hall')} />
       </group>
 
       <group name="East Hall" position={[251.444, 0, -162.974]} {...click('East Hall')}>
         <mesh geometry={nodes.East_Hall.geometry} material={bld} scale={[18.861, 37.507, 44.063]} castShadow />
-        <BuildingLabel name="East Hall" />
+        <BuildingLabel name="East Hall" hasLab={hasLab('East Hall')} />
       </group>
 
       <group name="Lippitt Hall" position={[35.783, 0.792, -354.799]} {...click('Lippitt Hall')}>
         <mesh geometry={nodes.Lippitt_Hall.geometry} material={bld} rotation={[-Math.PI, 0.031, -Math.PI]} scale={[20.504, 40.774, 47.901]} castShadow />
-        <BuildingLabel name="Lippitt Hall" />
+        <BuildingLabel name="Lippitt Hall" hasLab={hasLab('Lippitt Hall')} />
       </group>
 
       <group name="Edwards Auditorium" position={[215.578, 0, 196.52]} {...click('Edwards Auditorium')}>
         <mesh geometry={nodes._Edwards_Auditorium.geometry} material={bld} scale={[31.284, 32.33, 37.981]} castShadow />
-        <BuildingLabel name="Edwards Auditorium" yOffset={45} />
+        <BuildingLabel name="Edwards Auditorium" yOffset={45} hasLab={hasLab('Edwards Auditorium')} />
       </group>
 
       <group name="Davis Hall" position={[-199.375, 0, -236.084]} {...click('Davis Hall')}>
         <mesh geometry={nodes.Davis_Hall.geometry} material={bld} rotation={[Math.PI, -1.514, Math.PI]} scale={[18.843, 37.507, 30.51]} castShadow />
-        <BuildingLabel name="Davis Hall" />
+        <BuildingLabel name="Davis Hall" hasLab={hasLab('Davis Hall')} />
       </group>
 
       <group name="Carlotti Administration Building" position={[-172.943, 6, -119.083]} {...click('Carlotti Administration Building')}>
         <mesh geometry={nodes.Carlotti_Administration_Building.geometry} material={bld} rotation={[0, -0.044, 0]} scale={[-14.977, -29.783, -34.989]} castShadow />
-        <BuildingLabel name="Carlotti Admin" yOffset={45} />
+        <BuildingLabel name="Carlotti Admin" yOffset={45} hasLab={hasLab('Carlotti Administration Building')} />
       </group>
 
       <group name="Ballentine Hall" position={[-58.639, 0, -393.433]} {...click('Ballentine Hall')}>
         <mesh geometry={nodes.Bellentine_Hall.geometry} material={bld} scale={[18.861, 37.507, 44.063]} castShadow />
-        <BuildingLabel name="Ballentine Hall" />
+        <BuildingLabel name="Ballentine Hall" hasLab={hasLab('Ballentine Hall')} />
       </group>
 
       <group name="Taft Hall" position={[-199.511, -0.422, -321.269]} {...click('Taft Hall')}>
         <mesh geometry={nodes.Taft_Hall.geometry} material={bld} rotation={[-Math.PI, 0.056, -Math.PI]} scale={[18.843, 37.507, 30.51]} castShadow />
-        <BuildingLabel name="Taft Hall" />
+        <BuildingLabel name="Taft Hall" hasLab={hasLab('Taft Hall')} />
       </group>
 
       <group name="Kirk Center for Advanced Technology" position={[297.576, 0, -466.88]} {...click('Kirk Center for Advanced Technology')}>
         <mesh geometry={nodes.Kirk_Center_for_Advanced_Technology.geometry} material={bld} scale={[18.861, 37.507, 55.766]} castShadow />
-        <BuildingLabel name="Kirk Center" />
+        <BuildingLabel name="Kirk Center" hasLab={hasLab('Kirk Center for Advanced Technology')} />
       </group>
 
       <group name="Fascitelli Center For Advanced Engineering" position={[192.513, 4.021, -581.203]} {...click('Fascitelli Center For Advanced Engineering')}>
         <mesh geometry={nodes.The_Fascitelli_Center_for_Advance_Engineering.geometry} material={bld} rotation={[Math.PI, -1.544, Math.PI]} scale={[13.294, 26.422, 72.008]} castShadow />
-        <BuildingLabel name="Fascitelli Center" yOffset={40} />
+        <BuildingLabel name="Fascitelli Center" yOffset={40} hasLab={hasLab('Fascitelli Center For Advanced Engineering')} />
       </group>
 
       <group name="Kirk Applied Engineering Lab" position={[386.248, 0.546, -542.76]} {...click('Kirk Applied Engineering Lab')}>
         <mesh geometry={nodes.Kirk_Applied_Engineering_Lab.geometry} material={bld} rotation={[0, -0.011, 0]} scale={[18.893, 37.507, 62.425]} castShadow />
-        <BuildingLabel name="Kirk Applied Eng. Lab" />
+        <BuildingLabel name="Kirk Applied Eng. Lab" hasLab={hasLab('Kirk Applied Engineering Lab')} />
       </group>
 
       <group name="Swan Hall" position={[209.378, 0, 440.371]} {...click('Swan Hall')}>
         <mesh geometry={nodes.Swan_Hall.geometry} material={bld} scale={[43.814, 32.33, 41.69]} castShadow />
-        <BuildingLabel name="Swan Hall" yOffset={45} />
+        <BuildingLabel name="Swan Hall" yOffset={45} hasLab={hasLab('Swan Hall')} />
       </group>
 
       <group name="Green Hall" position={[10.907, 0, 326.636]} {...click('Green Hall')}>
         <mesh geometry={nodes.Green_Hall.geometry} material={bld} scale={[13.495, 37.507, 51.949]} castShadow />
-        <BuildingLabel name="Green Hall" />
+        <BuildingLabel name="Green Hall" hasLab={hasLab('Green Hall')} />
       </group>
 
-<group name="Quinn Hall" position={[-237.922, 0, 405.745]} {...click('Quinn Hall')}>
+      <group name="Quinn Hall" position={[-237.922, 0, 405.745]} {...click('Quinn Hall')}>
         <mesh geometry={nodes.Quinn_Hall.geometry} material={bld} rotation={[Math.PI, -0.003, 0]} scale={[-16.606, -47.555, -47.684]} castShadow />
-        <BuildingLabel name="Quinn Hall" yOffset={58} />
+        <BuildingLabel name="Quinn Hall" yOffset={58} hasLab={hasLab('Quinn Hall')} />
       </group>
 
       <group name="Fogarty Hall" position={[-235.513, 0, 583.391]} {...click('Fogarty Hall')}>
         <mesh geometry={nodes.Fogarty_Hall.geometry} material={bld} rotation={[0, -1.55, 0]} scale={[23.569, 37.507, 80.879]} castShadow />
-        <BuildingLabel name="Fogarty Hall" />
+        <BuildingLabel name="Fogarty Hall" hasLab={hasLab('Fogarty Hall')} />
       </group>
 
       <group name="Robert L Carothers Library & Learning Commons" position={[-278.744, 0, -481.486]} {...click('Robert L Carothers Library & Learning Commons')}>
         <mesh geometry={nodes['Robert_L_Carothers_Library_&_Learning_Commons'].geometry} material={bld} rotation={[0, -0.062, -Math.PI]} scale={[-92.078, -37.507, -59.402]} castShadow />
-        <BuildingLabel name="Robert L. Carothers Library & Learning Commons" yOffset={48} />
+        <BuildingLabel name="Robert L. Carothers Library & Learning Commons" yOffset={48} hasLab={hasLab('Robert L Carothers Library & Learning Commons')} />
       </group>
 
       <group name="Chafee Social Science Center" position={[-250.674, 0.863, -938.954]} {...click('Chafee Social Science Center')}>
         <mesh geometry={nodes.Chafee_Social_Science_Center.geometry} material={bld} rotation={[-Math.PI, 0.055, 0]} scale={[-63.67, -25.935, -41.075]} castShadow />
-        <BuildingLabel name="Chafee Social Science" yOffset={36} />
+        <BuildingLabel name="Chafee Social Science" yOffset={36} hasLab={hasLab('Chafee Social Science Center')} />
       </group>
 
       <group name="Woodward Hall" position={[-45.074, -1.355, -889.14]} {...click('Woodward Hall')}>
         <mesh geometry={nodes.Woodward_Hall.geometry} material={bld} rotation={[0, -0.04, 0]} scale={[14.009, 37.507, 94.419]} castShadow />
-        <BuildingLabel name="Woodward Hall" />
+        <BuildingLabel name="Woodward Hall" hasLab={hasLab('Woodward Hall')} />
       </group>
 
       <group name="Avedisian Hall" position={[-39.378, 0.091, -1041.283]} {...click('Avedisian Hall')}>
         <mesh geometry={nodes.CBLS.geometry} material={bld} rotation={[0, -0.04, -Math.PI]} scale={[-14.003, -37.507, -62.505]} castShadow />
-        <BuildingLabel name="Avedisian Hall" />
+        <BuildingLabel name="Avedisian Hall" hasLab={hasLab('Avedisian Hall')} />
       </group>
 
       <group name="Fine Arts Center" position={[674.285, -4.14, -722.748]} {...click('Fine Arts Center')}>
         <mesh geometry={nodes.Fine_Arts_Center.geometry} material={bld} rotation={[-Math.PI, 0.249, -Math.PI]} scale={[18.893, 37.507, 62.425]} castShadow />
-        <BuildingLabel name="Fine Arts Center" />
+        <BuildingLabel name="Fine Arts Center" hasLab={hasLab('Fine Arts Center')} />
       </group>
 
       <group name="Coastal Institute" position={[274.104, -2.947, -1288.992]} {...click('Coastal Institute')}>
         <mesh geometry={nodes.Coastal_Institute.geometry} material={bld} rotation={[-Math.PI, 0.175, -Math.PI]} scale={[13.193, 26.031, 85.981]} castShadow />
-        <BuildingLabel name="Coastal Institute" yOffset={38} />
+        <BuildingLabel name="Coastal Institute" yOffset={38} hasLab={hasLab('Coastal Institute')} />
       </group>
 
       <group name="Rodman Hall" position={[-319.578, 0, -657.489]} {...click('Rodman Hall')}>
         <mesh geometry={nodes.Rodman_Hall.geometry} material={bld} rotation={[0, -0.044, 0]} scale={[16.602, 47.555, 38.153]} castShadow />
-        <BuildingLabel name="Rodman Hall" yOffset={58} />
+        <BuildingLabel name="Rodman Hall" yOffset={58} hasLab={hasLab('Rodman Hall')} />
       </group>
 
       <group name="Center for Biotechnology and Life Sciences" position={[-234.104, 3.207, -1351.334]} {...click('Center for Biotechnology and Life Sciences')}>
         <mesh geometry={nodes['Center_for_Biotechnology_&_Life_Sciences'].geometry} material={bld} rotation={[0, -0.04, 0]} scale={[16.604, 44.473, 79.887]} castShadow />
-        <BuildingLabel name="Ctr. for Biotech & Life Sci." yOffset={55} />
+        <BuildingLabel name="Ctr. for Biotech & Life Sci." yOffset={55} hasLab={hasLab('Center for Biotechnology and Life Sciences')} />
       </group>
 
       <group name="Washburn Hall" position={[239.406, 0, -4.589]} {...click('Washburn Hall')}>
         <mesh geometry={nodes.Washburn_Hall.geometry} material={bld} rotation={[0, -0.039, 0]} scale={[18.85, 37.507, 42.4]} castShadow />
-        <BuildingLabel name="Washburn Hall" />
+        <BuildingLabel name="Washburn Hall" hasLab={hasLab('Washburn Hall')} />
       </group>
 
       <group name="Beaupre Center for Chemical and Forensic Sciences" position={[-390.66, -3.347, -1200.865]} {...click('Beaupre Center for Chemical and Forensic Sciences')}>
         <mesh geometry={nodes['Beaupre_Center_for_Chemical_&_Forensic_Sciences'].geometry} material={bld} rotation={[Math.PI, -1.478, Math.PI]} scale={[14.009, 37.507, 94.419]} castShadow />
-        <BuildingLabel name="Beaupre Center" />
+        <BuildingLabel name="Beaupre Center" hasLab={hasLab('Beaupre Center for Chemical and Forensic Sciences')} />
       </group>
 
       <group name="White Hall" position={[-567.83, -0.675, -1339.119]} {...click('White Hall')}>
         <mesh geometry={nodes.White_Hall.geometry} material={bld} rotation={[-Math.PI, 0.462, -Math.PI]} scale={[13.193, 26.031, 85.981]} castShadow />
-        <BuildingLabel name="White Hall" yOffset={38} />
+        <BuildingLabel name="White Hall" yOffset={38} hasLab={hasLab('White Hall')} />
       </group>
 
       <group name="Social Sciences Research Center" position={[-248.085, 3.844, -1350.436]} {...click('Social Sciences Research Center')}>
         <mesh geometry={nodes.Social_Sciences_Research_Center.geometry} material={bld} rotation={[0, -0.04, 0]} scale={[16.604, 44.473, 79.887]} castShadow />
-        <BuildingLabel name="Social Sciences Research Ctr." yOffset={55} />
+        <BuildingLabel name="Social Sciences Research Ctr." yOffset={55} hasLab={hasLab('Social Sciences Research Center')} />
       </group>
 
       <group name="Multicultural Center" position={[-398.924, 2.169, -66.519]} {...click('Multicultural Center')}>
         <mesh geometry={nodes.Mulicultural_Center.geometry} material={bld} rotation={[Math.PI, -1.514, Math.PI]} scale={[18.843, 37.507, 30.51]} castShadow />
-        <BuildingLabel name="Multicultural Center" />
+        <BuildingLabel name="Multicultural Center" hasLab={hasLab('Multicultural Center')} />
       </group>
 
       <group name="Memorial Union" position={[-414.493, 3.991, 250.576]} {...click('Memorial Union')}>
         <mesh geometry={nodes.Memorial_Union.geometry} material={bld} rotation={[-3.137, 0.003, -3.14]} scale={[43.814, 32.33, 41.69]} castShadow />
-        <BuildingLabel name="Memorial Union" yOffset={45} />
+        <BuildingLabel name="Memorial Union" yOffset={45} hasLab={hasLab('Memorial Union')} />
       </group>
 
       <group name="Tyler Hall" position={[-20.04, -2.141, -991.499]} {...click('Tyler Hall')}>
         <mesh geometry={nodes.Tyler_Hall.geometry} material={bld} rotation={[0, -0.04, -Math.PI]} scale={[-14.003, -37.507, -62.505]} castShadow />
-        <BuildingLabel name="Tyler Hall" />
+        <BuildingLabel name="Tyler Hall" hasLab={hasLab('Tyler Hall')} />
       </group>
 
       {/* Paths — no click handler */}

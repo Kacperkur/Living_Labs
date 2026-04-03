@@ -27,6 +27,19 @@ function HomeContent() {
   const [selectedMedia, setSelectedMedia] = useState<SearchResult | null>(null);
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
   const [cameraTargetBuilding, setCameraTargetBuilding] = useState<string | null>("Washburn Hall");
+  const [labBuildings, setLabBuildings] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch('/api/all-labs')
+      .then(r => r.json())
+      .then(data => {
+        const buildings = new Set<string>(
+          (data.labs ?? []).map((l: any) => l.building).filter(Boolean)
+        );
+        setLabBuildings(buildings);
+      })
+      .catch(() => {});
+  }, []);
 
   // Handle search from URL query parameter
   useEffect(() => {
@@ -120,6 +133,7 @@ function HomeContent() {
           {/* Right side: two H2s */}
           <div className="nav-links">
             <a href="/our-labs" style={{ textDecoration: 'none' }}><h2>Our Labs</h2></a>
+            <a href="/about" style={{ textDecoration: 'none' }}><h2>About</h2></a>
             {user && labId
               ? <a href={`/admin/lab/${labId}`} style={{ textDecoration: 'none' }}><h2>My Lab</h2></a>
               : <a href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></a>
@@ -148,7 +162,7 @@ function HomeContent() {
         }}>
           {/* Map - takes remaining space or full space when no results */}
           <div className="map-container">
-            <Scene onBuildingClick={handleBuildingClick} cameraTargetBuilding={cameraTargetBuilding} />
+            <Scene onBuildingClick={handleBuildingClick} cameraTargetBuilding={cameraTargetBuilding} labBuildings={labBuildings} />
           </div>
 
           {/* Results at bottom - shows all or just selected one */}

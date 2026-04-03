@@ -109,9 +109,10 @@ function CameraAnimator({
 interface SceneProps {
     onBuildingClick?: (name: string) => void;
     cameraTargetBuilding?: string | null;
+    labBuildings?: Set<string>;
 }
 
-export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}) {
+export function Scene({ onBuildingClick, cameraTargetBuilding, labBuildings }: SceneProps = {}) {
     const controlsRef = useRef<any>(null);
     const panState = useRef({ dragging: false, lastX: 0, lastY: 0, startX: 0, startY: 0, moved: false });
 
@@ -221,7 +222,7 @@ export function Scene({ onBuildingClick, cameraTargetBuilding }: SceneProps = {}
                 <Suspense fallback={<Loader />}>
                     <Bounds fit={false} margin={2}>
                         <Center>
-                            <MyURIModel onBuildingClick={handleBuildingClick} />
+                            <MyURIModel onBuildingClick={handleBuildingClick} labBuildings={labBuildings} />
                         </Center>
                     </Bounds>
                 </Suspense>
