@@ -116,7 +116,7 @@ function HomeContent() {
           {/* Left side: logo and H1 */}
           <a href="/" className="logo-section" style={{ textDecoration: "none", color: "inherit" }}>
             <img className="header-logo" src="https://firebasestorage.googleapis.com/v0/b/livinglabs-1a831.firebasestorage.app/o/logo.jpg?alt=media" alt="Logo" />
-            <h1 className="header-title">Living Labs</h1>
+            <h1 className="header-title">Living Labs<span style={{ fontSize: '0.50em', verticalAlign: 'super', marginLeft: '0.4em', letterSpacing: '0.05em', opacity: 0.6 }}>BETA</span></h1>
           </a>
 
           {/* Center: Search bar - wraps to next line on smaller screens */}
@@ -134,6 +134,7 @@ function HomeContent() {
           <div className="nav-links">
             <a href="/our-labs" style={{ textDecoration: 'none' }}><h2>Our Labs</h2></a>
             <a href="/about" style={{ textDecoration: 'none' }}><h2>About</h2></a>
+            <a href="/suggestion-box" style={{ textDecoration: 'none' }}><h2>Suggest</h2></a>
             {user && labId
               ? <a href={`/admin/lab/${labId}`} style={{ textDecoration: 'none' }}><h2>My Lab</h2></a>
               : <a href="/join" style={{ textDecoration: 'none' }}><h2>Join</h2></a>
