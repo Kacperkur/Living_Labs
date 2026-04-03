@@ -166,6 +166,19 @@ export function Scene({ onBuildingClick, cameraTargetBuilding, labBuildings }: S
 
         cam.position.add(movement);
         controls.target.add(movement);
+
+        // North/South/East/West pan bounds — derived from building extents + padding
+        const BOUND_W = -700, BOUND_E = 800;   // X axis (west/east)
+        const BOUND_N = -1500, BOUND_S = 750;  // Z axis (north/south)
+        const cx = Math.max(BOUND_W, Math.min(BOUND_E, controls.target.x));
+        const cz = Math.max(BOUND_N, Math.min(BOUND_S, controls.target.z));
+        const snapX = cx - controls.target.x;
+        const snapZ = cz - controls.target.z;
+        controls.target.x = cx;
+        controls.target.z = cz;
+        cam.position.x += snapX;
+        cam.position.z += snapZ;
+
         controls.update();
     }
 
@@ -194,7 +207,7 @@ export function Scene({ onBuildingClick, cameraTargetBuilding, labBuildings }: S
                     zoom={0.9}
                     top={350}
                     bottom={-120}
-                    near={0.4}
+                    near={-5000}
                     far={10000}
                 />
                 <directionalLight
